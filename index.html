@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Amortización de Terreno</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <!-- Librerías para Exportación -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        .row-paid { background-color: #f0fdf4 !important; }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .sticky-header th { position: sticky; top: 0; z-index: 10; }
+        .export-btn {
+            @apply px-4 py-2 text-xs font-bold rounded-lg transition-all border-2 flex items-center justify-center gap-2 shadow-sm;
+        }
+        .export-btn:hover {
+            @apply shadow-md transform -translate-y-0.5 opacity-90;
+        }
+        #btn-top {
+            display: none;
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 99;
+            transition: all 0.3s;
+        }
+        .collapse-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .collapse-content.open {
+            max-height: 10000px; /* Suficiente para el contenido */
+            transition: max-height 0.5s ease-in;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-900">
+
+    <!-- Botón Ir Arriba -->
+    <button id="btn-top" onclick="scrollToTop()" class="bg-blue-800 text-white p-3 rounded-full shadow-2xl hover:bg-black transition-all transform hover:scale-110 active:scale-95">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+    </button>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-slate-200 pb-6">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Análisis de Préstamo Hipotecario</h1>
+                <p class="text-slate-500 text-sm">Gestiona tus abonos y visualiza tu ahorro real en tiempo real</p>
+            </div>
+            
+            <div class="flex flex-wrap gap-3">
+                <button onclick="resetAll()" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl font-bold transition-colors border border-slate-300 flex items-center gap-2 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Reiniciar
+                </button>
+                <label class="flex items-center gap-2 px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-blue-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span class="font-bold">Importar JSON</span>
+                    <input id="fileInput" type="file" class="hidden" accept=".json" />
+                </label>
+            </div>
+        </div>
+
+        <!-- PANEL 1: Parámetros del Préstamo -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <button onclick="toggleSection('params-content', 'params-arrow')" class="w-full flex justify-between items-center p-6 hover:bg-slate-50 transition-colors">
+                <div class="flex items-center gap-2 text-slate-700">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                    <h2 class="text-lg font-bold">Parámetros del Préstamo</h2>
+                </div>
+                <svg id="params-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="params-content" class="collapse-content open">
+                <div class="p-6 pt-0">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider">Monto Prestado (RD$)</label>
+                            <input id="input-monto" type="number" value="1078210" class="w-full p-3 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none bg-slate-50 font-semibold transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider">Tasa Anual (%)</label>
+                            <input id="input-tasa" type="number" step="0.1" value="14.5" class="w-full p-3 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none bg-slate-50 font-semibold transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider">Cuota Mensual (RD$)</label>
+                            <input id="input-cuota" type="number" value="21115.35" class="w-full p-3 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none bg-slate-50 font-semibold transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider">Seguro Mensual (RD$)</label>
+                            <input id="input-seguro" type="number" value="610.70" class="w-full p-3 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none bg-slate-50 font-semibold transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider">Fecha de Inicio</label>
+                            <input id="input-fecha" type="date" value="2025-08-28" class="w-full p-3 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none bg-slate-50 font-semibold transition-all">
+                        </div>
+                        <div class="lg:col-span-5 mt-4">
+                            <button onclick="generateManualTable()" class="w-full md:w-auto px-10 py-4 bg-slate-900 hover:bg-blue-800 text-white font-black rounded-2xl transition-all shadow-xl active:scale-95">
+                                GENERAR ANÁLISIS COMPLETO
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL 2: Resumen de Información (Widgets) -->
+        <div id="summary-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
+            <button onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-6 hover:bg-slate-50 transition-colors">
+                <div class="flex items-center gap-2 text-slate-700">
+                    <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 2v-6m-8 13h11a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v11a2 2 0 002 2z"/></svg>
+                    <h2 class="text-lg font-bold">Resumen del Préstamo</h2>
+                </div>
+                <svg id="summary-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="summary-content" class="collapse-content open">
+                <div class="p-6 pt-0">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Actual</p>
+                            <p id="stat-balance" class="text-2xl font-black text-slate-800">RD$ 0.00</p>
+                            <p class="text-[10px] text-slate-400 mt-2 font-medium italic">Pendiente de capital</p>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Total Interés</p>
+                            <p id="stat-interest" class="text-2xl font-black text-blue-700">RD$ 0.00</p>
+                            <p id="stat-interest-pct" class="text-[10px] text-blue-300 mt-2 font-medium">0% del costo total</p>
+                        </div>
+                        <div class="bg-blue-900 p-6 rounded-2xl shadow-xl border border-blue-800 relative overflow-hidden text-white border-l-4 border-l-blue-400">
+                            <div class="relative z-10">
+                                <p class="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1">Ahorro Real Estimado</p>
+                                <p id="stat-savings" class="text-2xl font-black">RD$ 0.00</p>
+                                <p id="stat-months" class="text-[10px] text-blue-200 mt-2 font-bold bg-blue-800 inline-block px-2 py-1 rounded-lg">Ahorras 0 meses</p>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 border-l-4 border-l-orange-500">
+                            <p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Abonos Realizados</p>
+                            <p id="stat-abonos" class="text-2xl font-black text-orange-700">RD$ 0.00</p>
+                            <p class="text-[10px] text-orange-400 mt-2 font-medium italic">Solo estatus "P"</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fecha Final</p>
+                            <p id="stat-end-date" class="text-xl font-black text-slate-800">-</p>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cuotas Pendientes</p>
+                            <p id="stat-remaining-months" class="text-xl font-black text-slate-800">0</p>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pagado a la Fecha</p>
+                            <p id="stat-total-paid" class="text-xl font-black text-emerald-600">RD$ 0.00</p>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Carga de Interés</p>
+                            <p id="stat-interest-load" class="text-xl font-black text-rose-600">0.00%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL 3: Análisis Visual (Gráficos) - COLLAPSED POR DEFECTO -->
+        <div id="charts-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
+            <button onclick="toggleSection('charts-content', 'charts-arrow', true)" class="w-full flex justify-between items-center p-6 hover:bg-slate-50 transition-colors">
+                <div class="flex items-center gap-2 text-slate-700">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <h2 class="text-lg font-bold">Análisis Visual (Gráficos)</h2>
+                </div>
+                <svg id="charts-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="charts-content" class="collapse-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 pt-0">
+                    <div id="chart-balance" class="w-full h-80"></div>
+                    <div id="chart-distribution" class="w-full h-80"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL 4: Detalle de Amortización (Tabla) -->
+        <div id="table-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
+            <div class="w-full flex flex-col sm:flex-row justify-between items-center p-6 bg-slate-50 border-b border-slate-200 gap-4">
+                <button onclick="toggleSection('table-content-area', 'table-arrow')" class="flex items-center gap-2 text-slate-700 flex-grow text-left">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <h2 class="text-lg font-black">Detalle de Amortización Dinámica</h2>
+                    <svg id="table-arrow" class="w-5 h-5 text-slate-400 transition-transform duration-300 rotate-180 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest mr-2">Exportar:</span>
+                    <button onclick="event.stopPropagation(); exportData('xlsx')" class="export-btn bg-emerald-50 border-emerald-200 text-emerald-700">XLSX</button>
+                    <button onclick="event.stopPropagation(); exportData('pdf')" class="export-btn bg-rose-50 border-rose-200 text-rose-700">PDF</button>
+                    <button onclick="event.stopPropagation(); exportData('json')" class="export-btn bg-white border-slate-300 text-slate-700">JSON</button>
+                </div>
+            </div>
+            
+            <!-- CONTENEDOR COLAPSABLE QUE LIMITA LA ALTURA Y EL SCROLL -->
+            <div id="table-content-area" class="collapse-content open">
+                <div class="overflow-x-auto overflow-y-auto max-h-[600px] border-t border-slate-100">
+                    <table class="w-full text-left border-collapse" id="amortizationTable">
+                        <thead class="sticky top-0 bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold z-20">
+                            <tr class="sticky-header">
+                                <th class="p-4 border-r border-slate-700 text-center">Mes</th>
+                                <th class="p-4 border-r border-slate-700">Fecha Pago</th>
+                                <th class="p-4 border-r border-slate-700 text-right">Pago Regular</th>
+                                <th class="p-4 border-r border-slate-700 text-right">Interés</th>
+                                <th class="p-4 border-r border-slate-700 text-right">Capital</th>
+                                <th class="p-4 border-r border-slate-700 text-center bg-slate-700">Seguro</th>
+                                <th class="p-4 border-r border-slate-700 text-center bg-blue-900">Abono Extra</th>
+                                <th class="p-4 border-r border-slate-700 text-right">Cuota Total</th>
+                                <th class="p-4 border-r border-slate-700 text-right font-black">Saldo</th>
+                                <th class="p-4 text-center bg-slate-700">Estatus</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="text-sm text-slate-600">
+                            <!-- Contenido dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIG GLOBAL
+        let CONFIG = {
+            montoInicial: 1078210.00,
+            tasaAnual: 14.5 / 100,
+            tasaMensual: (14.5 / 12) / 100,
+            cuotaFija: 21115.35,
+            seguro: 610.70
+        };
+
+        let amortizationData = [];
+        let nextFocusId = null;
+
+        // BOTÓN TOP
+        window.onscroll = function() {
+            const btn = document.getElementById("btn-top");
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Lógica Genérica de Acordeón
+        function toggleSection(contentId, arrowId, isChart = false) {
+            const content = document.getElementById(contentId);
+            const arrow = document.getElementById(arrowId);
+            const isOpen = content.classList.toggle('open');
+            if(arrow) arrow.classList.toggle('rotate-180', isOpen);
+            
+            // Reajustar gráficos si es necesario
+            if (isChart && isOpen) {
+                setTimeout(() => {
+                    Plotly.Plots.resize('chart-balance');
+                    Plotly.Plots.resize('chart-distribution');
+                }, 300);
+            }
+        }
+
+        // INIT
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+
+        function cleanValue(val) {
+            if (val === null || val === undefined || val === "") return 0;
+            if (typeof val === 'number') return val;
+            return parseFloat(String(val).replace(/,/g, '')) || 0;
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    amortizationData = [];
+                    document.getElementById('tableBody').innerHTML = '';
+
+                    const jsonData = JSON.parse(event.target.result);
+                    
+                    if (jsonData.length > 0) {
+                        const first = jsonData[0];
+                        if (first["Pago Regular"]) document.getElementById('input-cuota').value = cleanValue(first["Pago Regular"]);
+                        if (first["Seguro"]) document.getElementById('input-seguro').value = cleanValue(first["Seguro"]);
+                    }
+                    
+                    amortizationData = jsonData.map(row => ({
+                        mes: parseInt(row["Mes"]),
+                        fecha: row["Fecha Pago"],
+                        abono: cleanValue(row["Abono"]),
+                        seguro: cleanValue(row["Seguro"] || document.getElementById('input-seguro').value),
+                        estatus: (row["Estatus"] || "").toUpperCase()
+                    }));
+                    
+                    recalculateSchedule();
+                    showSections();
+                } catch (error) {
+                    console.error("Error al procesar JSON:", error);
+                    alert("Error al procesar el archivo. Verifique el formato.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function generateManualTable() {
+            const monto = parseFloat(document.getElementById('input-monto').value);
+            const tasa = parseFloat(document.getElementById('input-tasa').value) / 100;
+            const cuota = parseFloat(document.getElementById('input-cuota').value);
+            const seguro = parseFloat(document.getElementById('input-seguro').value);
+            const fechaStr = document.getElementById('input-fecha').value;
+
+            if (!monto || !tasa || !cuota || !fechaStr) {
+                alert("Completa todos los campos obligatorios.");
+                return;
+            }
+
+            CONFIG.montoInicial = monto;
+            CONFIG.tasaAnual = tasa;
+            CONFIG.tasaMensual = tasa / 12;
+            CONFIG.cuotaFija = cuota;
+            CONFIG.seguro = seguro;
+
+            amortizationData = [];
+            let currentSaldo = monto;
+            let currentFecha = new Date(fechaStr + "T12:00:00");
+            let mes = 1;
+
+            while (currentSaldo > 0.01 && mes <= 420) {
+                const interestMes = currentSaldo * CONFIG.tasaMensual;
+                const capitalMes = cuota - interestMes - seguro;
+                
+                amortizationData.push({
+                    mes: mes,
+                    fecha: formatDate(currentFecha),
+                    abono: 0,
+                    seguro: seguro,
+                    estatus: ""
+                });
+
+                currentSaldo -= (capitalMes);
+                currentFecha.setMonth(currentFecha.getMonth() + 1);
+                mes++;
+            }
+
+            recalculateSchedule();
+            showSections();
+        }
+
+        function recalculateSchedule() {
+            CONFIG.montoInicial = parseFloat(document.getElementById('input-monto').value);
+            CONFIG.tasaAnual = parseFloat(document.getElementById('input-tasa').value) / 100;
+            CONFIG.tasaMensual = CONFIG.tasaAnual / 12;
+            CONFIG.cuotaFija = parseFloat(document.getElementById('input-cuota').value);
+
+            let currentSaldo = CONFIG.montoInicial;
+            let totalAbonosP = 0;
+            let totalIntP = 0;
+            let totalSeguroP = 0;
+            let saldoActual = CONFIG.montoInicial;
+            let finishedMes = 0;
+            let endDate = "";
+            let remainingCount = 0;
+            let historicalPaid = 0;
+
+            for (let i = 0; i < amortizationData.length; i++) {
+                let row = amortizationData[i];
+                
+                if (currentSaldo <= 0.01) {
+                    row.visible = false;
+                    row.saldo = 0;
+                    row.interes = 0;
+                    row.capital = 0;
+                    row.cuota = 0;
+                    continue;
+                }
+
+                row.visible = true;
+                row.interes = currentSaldo * CONFIG.tasaMensual;
+                let capitalFromRegular = CONFIG.cuotaFija - row.interes - row.seguro;
+                
+                row.capital = capitalFromRegular;
+                row.cuota = CONFIG.cuotaFija + row.abono;
+                
+                let reduccionTotal = row.capital + row.abono;
+                currentSaldo -= reduccionTotal;
+                
+                if (currentSaldo < 0) currentSaldo = 0;
+                row.saldo = currentSaldo;
+
+                if (row.estatus === "P") {
+                    totalAbonosP += row.abono;
+                    historicalPaid += row.cuota;
+                    saldoActual = row.saldo;
+                } else {
+                    remainingCount++;
+                }
+                
+                totalIntP += row.interes;
+                totalSeguroP += row.seguro;
+                finishedMes = row.mes;
+                endDate = row.fecha;
+            }
+
+            renderTable();
+            updateDashboardStats({
+                totalAbonos: totalAbonosP,
+                totalInteres: totalIntP,
+                totalSeguroActual: totalSeguroP,
+                saldoActual: saldoActual,
+                totalMesesActual: finishedMes,
+                endDate: endDate,
+                remainingMonths: remainingCount,
+                historicalPaid: historicalPaid
+            });
+            
+            if (nextFocusId) {
+                const target = nextFocusId;
+                nextFocusId = null;
+                setTimeout(() => {
+                    const el = document.getElementById(target);
+                    if (el) { el.focus(); el.select(); }
+                }, 50);
+            }
+        }
+
+        function updateDashboardStats(data) {
+            let totalIntBase = 0;
+            let totalSeguroBase = 0;
+            let tempSaldo = CONFIG.montoInicial;
+            let mesesBase = 0;
+            const seguroGlobal = parseFloat(document.getElementById('input-seguro').value) || 0;
+
+            while (tempSaldo > 0.01 && mesesBase <= 420) {
+                let int = tempSaldo * CONFIG.tasaMensual;
+                totalIntBase += int;
+                totalSeguroBase += seguroGlobal;
+                tempSaldo -= (CONFIG.cuotaFija - int - seguroGlobal);
+                mesesBase++;
+            }
+            
+            const ahorroTotal = (totalIntBase + totalSeguroBase) - (data.totalInteres + data.totalSeguroActual);
+            const mesesAhorrados = Math.max(0, mesesBase - data.totalMesesActual);
+            const intPct = (data.totalInteres / (data.totalInteres + CONFIG.montoInicial)) * 100;
+            const intLoad = (data.totalInteres / CONFIG.montoInicial) * 100;
+
+            document.getElementById('stat-balance').innerText = formatRD(data.saldoActual);
+            document.getElementById('stat-interest').innerText = formatRD(data.totalInteres);
+            document.getElementById('stat-interest-pct').innerText = `${intPct.toFixed(1)}% del costo total proyectado`;
+            document.getElementById('stat-savings').innerText = formatRD(ahorroTotal);
+            document.getElementById('stat-abonos').innerText = formatRD(data.totalAbonos);
+            document.getElementById('stat-months').innerText = `Ahorras ${mesesAhorrados} meses (${mesesBase} vs ${data.totalMesesActual})`;
+
+            document.getElementById('stat-end-date').innerText = data.endDate || "-";
+            document.getElementById('stat-remaining-months').innerText = data.remainingMonths;
+            document.getElementById('stat-total-paid').innerText = formatRD(data.historicalPaid);
+            document.getElementById('stat-interest-load').innerText = `${intLoad.toFixed(2)}%`;
+
+            updateCharts();
+        }
+
+        function updateCharts() {
+            const dataVisible = amortizationData.filter(d => d.visible);
+            if (dataVisible.length === 0) return;
+            
+            const traceSaldo = {
+                x: dataVisible.map(d => d.mes),
+                y: dataVisible.map(d => d.saldo),
+                type: 'scatter', mode: 'lines', name: 'Saldo',
+                line: { color: '#1e293b', width: 4 },
+                fill: 'tozeroy', fillcolor: 'rgba(30, 41, 59, 0.05)'
+            };
+
+            Plotly.newPlot('chart-balance', [traceSaldo], { 
+                title: 'Proyección de Saldo Restante', 
+                margin: { t: 50, b: 40, l: 60, r: 20 },
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)'
+            });
+
+            const traceCap = {
+                x: dataVisible.map(d => d.mes),
+                y: dataVisible.map(d => d.capital + d.abono),
+                name: 'Capital + Abono', type: 'bar', marker: { color: '#10b981' }
+            };
+            const traceInt = {
+                x: dataVisible.map(d => d.mes),
+                y: dataVisible.map(d => d.interes),
+                name: 'Interés', type: 'bar', marker: { color: '#ef4444' }
+            };
+
+            Plotly.newPlot('chart-distribution', [traceCap, traceInt], { 
+                title: 'Desglose Mensual (Cap vs Int)', 
+                barmode: 'stack',
+                margin: { t: 50, b: 40, l: 60, r: 20 },
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)'
+            });
+        }
+
+        function renderTable() {
+            const body = document.getElementById('tableBody');
+            body.innerHTML = '';
+
+            amortizationData.forEach((row, index) => {
+                if (!row.visible) return;
+
+                const tr = document.createElement('tr');
+                tr.className = `border-b border-slate-100 transition-colors ${row.estatus === 'P' ? 'row-paid' : 'hover:bg-slate-50'}`;
+                
+                tr.innerHTML = `
+                    <td class="p-4 text-center font-bold border-r border-slate-100">${row.mes}</td>
+                    <td class="p-4 text-slate-400 border-r border-slate-100 text-xs">${row.fecha}</td>
+                    <td class="p-4 text-right border-r border-slate-100 font-medium">${formatRD(CONFIG.cuotaFija)}</td>
+                    <td class="p-4 text-right text-rose-600 border-r border-slate-100 font-medium">${formatRD(row.interes)}</td>
+                    <td class="p-4 text-right text-emerald-700 border-r border-slate-100 font-medium">${formatRD(row.capital)}</td>
+                    <td class="p-4 text-center border-r border-slate-100">
+                        <input type="number" step="0.01" id="edit-seguro-${index}" value="${row.seguro.toFixed(2)}" 
+                               onfocus="this.select()" onkeydown="handleNav(event, ${index}, 'seguro')"
+                               onchange="updateField(${index}, 'seguro', this.value)"
+                               class="w-16 p-1.5 text-center border border-slate-200 rounded-lg text-slate-600 focus:ring-2 focus:ring-blue-400 outline-none bg-white font-bold">
+                    </td>
+                    <td class="p-4 text-center border-r border-slate-100 bg-blue-50/50">
+                        <input type="number" id="edit-abono-${index}" value="${row.abono}" 
+                               onfocus="this.select()" onkeydown="handleNav(event, ${index}, 'abono')"
+                               onchange="updateField(${index}, 'abono', this.value)"
+                               class="w-24 p-1.5 text-center border border-blue-200 rounded-lg font-black text-blue-800 bg-white focus:ring-2 focus:ring-blue-600 outline-none">
+                    </td>
+                    <td class="p-4 text-right font-black border-r border-slate-100">${formatRD(row.cuota)}</td>
+                    <td class="p-4 text-right font-black text-slate-900 border-r border-slate-100">${formatRD(row.saldo)}</td>
+                    <td class="p-4 text-center">
+                        <input type="text" maxlength="1" id="edit-estatus-${index}" value="${row.estatus}" 
+                               onfocus="this.select()" onkeydown="handleNav(event, ${index}, 'estatus')"
+                               onchange="updateField(${index}, 'estatus', this.value)"
+                               class="w-10 p-1.5 text-center border border-slate-300 rounded-lg uppercase font-black focus:ring-2 focus:ring-green-500 outline-none bg-white">
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function handleNav(e, index, field) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                let tid = null;
+                if (field === 'seguro') tid = `edit-abono-${index}`;
+                else if (field === 'abono') tid = `edit-estatus-${index}`;
+                else if (field === 'estatus') {
+                    if (index < amortizationData.length - 1 && amortizationData[index+1].visible) {
+                        tid = `edit-seguro-${index + 1}`;
+                    }
+                }
+
+                if (tid) {
+                    nextFocusId = tid;
+                    e.target.blur();
+                    setTimeout(() => { if(nextFocusId) recalculateSchedule(); }, 60);
+                }
+            }
+        }
+
+        function updateField(index, field, value) {
+            if (field === 'estatus') amortizationData[index][field] = value.toUpperCase();
+            else amortizationData[index][field] = parseFloat(value) || 0;
+            recalculateSchedule();
+        }
+
+        function exportData(format) {
+            if (amortizationData.length === 0) return;
+            const dataV = amortizationData.filter(d => d.visible);
+            const fileName = `analisis_amortizacion_${new Date().toISOString().split('T')[0]}`;
+            const exportRows = dataV.map(r => ({
+                "Mes": r.mes, "Fecha Pago": r.fecha, "P. Regular": CONFIG.cuotaFija,
+                "Interés": r.interes.toFixed(2), "Capital": r.capital.toFixed(2), "Seguro": r.seguro.toFixed(2),
+                "Abono": r.abono, "Cuota": r.cuota.toFixed(2), "Saldo": r.saldo.toFixed(2), "Estatus": r.estatus
+            }));
+
+            if (format === 'json') downloadFile(JSON.stringify(exportRows, null, 2), `${fileName}.json`, 'application/json');
+            if (format === 'xlsx') {
+                const ws = XLSX.utils.json_to_sheet(exportRows);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Amortizacion");
+                XLSX.writeFile(wb, `${fileName}.xlsx`);
+            }
+            if (format === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('l', 'mm', 'a4');
+                doc.setFontSize(16); doc.text("Análisis de Amortización Real", 14, 15);
+                doc.autoTable({ head: [Object.keys(exportRows[0])], body: exportRows.map(r => Object.values(r)), startY: 25, styles: { fontSize: 7 } });
+                doc.save(`${fileName}.pdf`);
+            }
+        }
+
+        function downloadFile(content, fileName, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            a.click();
+        }
+
+        function formatRD(value) {
+            return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(value);
+        }
+
+        function formatDate(date) {
+            return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+        }
+
+        function showSections() {
+            document.getElementById('summary-panel').classList.remove('hidden');
+            document.getElementById('charts-wrapper').classList.remove('hidden');
+            document.getElementById('table-wrapper').classList.remove('hidden');
+        }
+
+        function resetAll() {
+            amortizationData = [];
+            location.reload();
+        }
+    </script>
+</body>
+</html>
