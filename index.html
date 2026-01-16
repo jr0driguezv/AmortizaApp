@@ -2,8 +2,18 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Amortización de Terreno</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AmortizaApp</title>
+    
+    <!-- PWA / iOS App Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AmortizaApp">
+    
+    <!-- 1. ICONO DE PESTAÑA -->
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2845/2845944.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2845/2845944.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <!-- Librerías para Exportación -->
@@ -14,7 +24,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
         .row-paid { background-color: #f0fdf4 !important; }
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button {
@@ -23,7 +36,7 @@
         }
         .sticky-header th { position: sticky; top: 0; z-index: 10; }
         .export-btn {
-            @apply px-4 py-2 text-xs font-bold rounded-lg transition-all border-2 flex items-center justify-center gap-2 shadow-sm;
+            @apply px-3 py-2 sm:px-4 sm:py-2 text-xs font-bold rounded-lg transition-all border-2 flex items-center justify-center gap-2 shadow-sm;
         }
         .export-btn:hover {
             @apply shadow-md transform -translate-y-0.5 opacity-90;
@@ -31,8 +44,8 @@
         #btn-top {
             display: none;
             position: fixed;
-            bottom: 30px;
-            right: 30px;
+            bottom: 20px;
+            right: 20px;
             z-index: 99;
             transition: all 0.3s;
         }
@@ -42,32 +55,46 @@
             transition: max-height 0.3s ease-out;
         }
         .collapse-content.open {
-            max-height: 10000px; /* Suficiente para el contenido */
+            max-height: 20000px; /* Suficiente para el contenido */
             transition: max-height 0.5s ease-in;
+        }
+
+        /* Optimizaciones para Celulares */
+        @media (max-width: 640px) {
+            input, select, textarea {
+                font-size: 16px !important; /* Evita zoom automático en iPhone */
+            }
+            .table-mobile-container th, .table-mobile-container td {
+                padding: 0.5rem 0.25rem !important;
+                font-size: 10px;
+            }
+            .widget-text-size {
+                font-size: 1.25rem !important;
+            }
         }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-900">
+<body class="bg-slate-50 min-h-screen text-slate-900 pb-10">
 
     <!-- Botón Ir Arriba -->
-    <button id="btn-top" onclick="scrollToTop()" class="bg-blue-800 text-white p-3 rounded-full shadow-2xl hover:bg-black transition-all transform hover:scale-110 active:scale-95">
+    <button id="btn-top" onclick="scrollToTop()" class="bg-blue-800 text-white p-4 rounded-full shadow-2xl hover:bg-black transition-all transform hover:scale-110 active:scale-95 shadow-blue-900/20">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
     </button>
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-4 py-6 sm:py-8">
         <!-- Header -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-slate-200 pb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 border-b border-slate-200 pb-6">
             <div>
-                <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Análisis de Préstamo Hipotecario</h1>
-                <p class="text-slate-500 text-sm">Gestiona tus abonos y visualiza tu ahorro real en tiempo real</p>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">AmortizaApp - (Gestión Hipotecaria Personalizada)</h1>
+                <p class="text-slate-500 text-sm"> Análisis de Préstamos - Gestiona tus abonos y visualiza tu ahorro real en tiempo real</p>
             </div>
             
-            <div class="flex flex-wrap gap-3">
-                <button onclick="resetAll()" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl font-bold transition-colors border border-slate-300 flex items-center gap-2 shadow-sm">
+            <div class="flex flex-wrap gap-3 w-full md:w-auto">
+                <button onclick="resetAll()" class="flex-1 md:flex-none px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl font-bold transition-colors border border-slate-300 flex items-center justify-center gap-2 shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     Reiniciar
                 </button>
-                <label class="flex items-center gap-2 px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-blue-200">
+                <label class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-blue-200 active:scale-95">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     <span class="font-bold">Importar JSON</span>
                     <input id="fileInput" type="file" class="hidden" accept=".json" />
@@ -77,16 +104,16 @@
 
         <!-- PANEL 1: Parámetros del Préstamo -->
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-            <button onclick="toggleSection('params-content', 'params-arrow')" class="w-full flex justify-between items-center p-6 hover:bg-slate-50 transition-colors">
+            <button onclick="toggleSection('params-content', 'params-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors">
                 <div class="flex items-center gap-2 text-slate-700">
                     <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-                    <h2 class="text-lg font-bold">Parámetros del Préstamo</h2>
+                    <h2 class="text-base sm:text-lg font-bold">Parámetros del Préstamo</h2>
                 </div>
                 <svg id="params-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div id="params-content" class="collapse-content open">
-                <div class="p-6 pt-0">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
+                <div class="p-5 sm:p-6 pt-0">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 items-end">
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider">Monto Prestado (RD$)</label>
                             <input id="input-monto" type="number" value="1078210" class="w-full p-3 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none bg-slate-50 font-semibold transition-all">
@@ -108,7 +135,7 @@
                             <input id="input-fecha" type="date" value="2025-08-28" class="w-full p-3 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none bg-slate-50 font-semibold transition-all">
                         </div>
                         <div class="lg:col-span-5 mt-4">
-                            <button onclick="generateManualTable()" class="w-full md:w-auto px-10 py-4 bg-slate-900 hover:bg-blue-800 text-white font-black rounded-2xl transition-all shadow-xl active:scale-95">
+                            <button onclick="generateManualTable()" class="w-full md:w-auto px-10 py-4 bg-slate-900 hover:bg-blue-800 text-white font-black rounded-2xl transition-all shadow-xl active:scale-95 uppercase text-xs tracking-widest">
                                 GENERAR ANÁLISIS COMPLETO
                             </button>
                         </div>
@@ -117,116 +144,114 @@
             </div>
         </div>
 
-        <!-- PANEL 2: Resumen de Información (Widgets) -->
+        <!-- PANEL 2: Resumen de Información -->
         <div id="summary-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
-            <button onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-6 hover:bg-slate-50 transition-colors">
+            <button onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors">
                 <div class="flex items-center gap-2 text-slate-700">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 2v-6m-8 13h11a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v11a2 2 0 002 2z"/></svg>
-                    <h2 class="text-lg font-bold">Resumen del Préstamo</h2>
+                    <h2 class="text-base sm:text-lg font-bold">Resumen del Préstamo</h2>
                 </div>
                 <svg id="summary-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div id="summary-content" class="collapse-content open">
-                <div class="p-6 pt-0">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <div class="p-5 sm:p-6 pt-0">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100">
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Actual</p>
-                            <p id="stat-balance" class="text-2xl font-black text-slate-800">RD$ 0.00</p>
+                            <p id="stat-balance" class="text-xl sm:text-2xl font-black text-slate-800 widget-text-size">RD$ 0.00</p>
                             <p class="text-[10px] text-slate-400 mt-2 font-medium italic">Pendiente de capital</p>
                         </div>
-                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100">
                             <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Total Interés</p>
-                            <p id="stat-interest" class="text-2xl font-black text-blue-700">RD$ 0.00</p>
+                            <p id="stat-interest" class="text-xl sm:text-2xl font-black text-blue-700 widget-text-size">RD$ 0.00</p>
                             <p id="stat-interest-pct" class="text-[10px] text-blue-300 mt-2 font-medium">0% del costo total</p>
                         </div>
-                        <div class="bg-blue-900 p-6 rounded-2xl shadow-xl border border-blue-800 relative overflow-hidden text-white border-l-4 border-l-blue-400">
+                        <div class="bg-blue-900 p-5 sm:p-6 rounded-2xl shadow-xl border border-blue-800 relative overflow-hidden text-white border-l-4 border-l-blue-400">
                             <div class="relative z-10">
                                 <p class="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1">Ahorro Real Estimado</p>
-                                <p id="stat-savings" class="text-2xl font-black">RD$ 0.00</p>
+                                <p id="stat-savings" class="text-xl sm:text-2xl font-black widget-text-size">RD$ 0.00</p>
                                 <p id="stat-months" class="text-[10px] text-blue-200 mt-2 font-bold bg-blue-800 inline-block px-2 py-1 rounded-lg">Ahorras 0 meses</p>
                             </div>
                         </div>
-                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 border-l-4 border-l-orange-500">
+                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 border-l-4 border-l-orange-500">
                             <p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Abonos Realizados</p>
-                            <p id="stat-abonos" class="text-2xl font-black text-orange-700">RD$ 0.00</p>
+                            <p id="stat-abonos" class="text-xl sm:text-2xl font-black text-orange-700 widget-text-size">RD$ 0.00</p>
                             <p class="text-[10px] text-orange-400 mt-2 font-medium italic">Solo estatus "P"</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fecha Final</p>
-                            <p id="stat-end-date" class="text-xl font-black text-slate-800">-</p>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Fecha Final</p>
+                            <p id="stat-end-date" class="text-xs sm:text-sm font-bold text-slate-800">-</p>
                         </div>
-                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Cuotas Pendientes</p>
-                            <p id="stat-remaining-months" class="text-xl font-black text-slate-800">0</p>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Cuotas Pendientes</p>
+                            <p id="stat-remaining-months" class="text-xs sm:text-sm font-bold text-slate-800">0</p>
                         </div>
-                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pagado a la Fecha</p>
-                            <p id="stat-total-paid" class="text-xl font-black text-emerald-600">RD$ 0.00</p>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Pagado a la Fecha</p>
+                            <p id="stat-total-paid" class="text-xs sm:text-sm font-bold text-emerald-600">RD$ 0.00</p>
                         </div>
-                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Carga de Interés</p>
-                            <p id="stat-interest-load" class="text-xl font-black text-rose-600">0.00%</p>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Carga de Interés</p>
+                            <p id="stat-interest-load" class="text-xs sm:text-sm font-bold text-rose-600">0.00%</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- PANEL 3: Análisis Visual (Gráficos) - COLLAPSED POR DEFECTO -->
+        <!-- PANEL 3: Análisis Visual (Gráficos) -->
         <div id="charts-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
-            <button onclick="toggleSection('charts-content', 'charts-arrow', true)" class="w-full flex justify-between items-center p-6 hover:bg-slate-50 transition-colors">
+            <button onclick="toggleSection('charts-content', 'charts-arrow', true)" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors">
                 <div class="flex items-center gap-2 text-slate-700">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    <h2 class="text-lg font-bold">Análisis Visual (Gráficos)</h2>
+                    <h2 class="text-base sm:text-lg font-bold">Análisis Visual (Gráficos)</h2>
                 </div>
                 <svg id="charts-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div id="charts-content" class="collapse-content">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 pt-0">
-                    <div id="chart-balance" class="w-full h-80"></div>
-                    <div id="chart-distribution" class="w-full h-80"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-5 sm:p-6 pt-0">
+                    <div id="chart-balance" class="w-full h-72 sm:h-80"></div>
+                    <div id="chart-distribution" class="w-full h-72 sm:h-80"></div>
                 </div>
             </div>
         </div>
 
-        <!-- PANEL 4: Detalle de Amortización (Tabla) -->
+        <!-- PANEL 4: Detalle de Amortización -->
         <div id="table-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
-            <div class="w-full flex flex-col sm:flex-row justify-between items-center p-6 bg-slate-50 border-b border-slate-200 gap-4">
+            <div class="w-full flex flex-col lg:flex-row justify-between items-center p-5 sm:p-6 bg-slate-50 border-b border-slate-200 gap-4">
                 <button onclick="toggleSection('table-content-area', 'table-arrow')" class="flex items-center gap-2 text-slate-700 flex-grow text-left">
                     <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    <h2 class="text-lg font-black">Detalle de Amortización Dinámica</h2>
+                    <h2 class="text-base sm:text-lg font-black uppercase tracking-tight">Detalle de Amortización Dinámica</h2>
                     <svg id="table-arrow" class="w-5 h-5 text-slate-400 transition-transform duration-300 rotate-180 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest mr-2">Exportar:</span>
-                    <button onclick="event.stopPropagation(); exportData('xlsx')" class="export-btn bg-emerald-50 border-emerald-200 text-emerald-700">XLSX</button>
-                    <button onclick="event.stopPropagation(); exportData('pdf')" class="export-btn bg-rose-50 border-rose-200 text-rose-700">PDF</button>
-                    <button onclick="event.stopPropagation(); exportData('json')" class="export-btn bg-white border-slate-300 text-slate-700">JSON</button>
+                <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-hide">
+                    <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest mr-2 whitespace-nowrap">Exportar:</span>
+                    <button onclick="event.stopPropagation(); exportData('xlsx')" class="export-btn bg-emerald-50 border-emerald-200 text-emerald-700 whitespace-nowrap">XLSX</button>
+                    <button onclick="event.stopPropagation(); exportData('pdf')" class="export-btn bg-rose-50 border-rose-200 text-rose-700 whitespace-nowrap">PDF</button>
+                    <button onclick="event.stopPropagation(); exportData('json')" class="export-btn bg-white border-slate-300 text-slate-700 whitespace-nowrap">JSON</button>
                 </div>
             </div>
             
-            <!-- CONTENEDOR COLAPSABLE QUE LIMITA LA ALTURA Y EL SCROLL -->
             <div id="table-content-area" class="collapse-content open">
-                <div class="overflow-x-auto overflow-y-auto max-h-[600px] border-t border-slate-100">
-                    <table class="w-full text-left border-collapse" id="amortizationTable">
-                        <thead class="sticky top-0 bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold z-20">
+                <div class="overflow-x-auto overflow-y-auto max-h-[500px] sm:max-h-[600px] border-t border-slate-100">
+                    <table class="w-full text-left border-collapse table-mobile-container" id="amortizationTable">
+                        <thead class="sticky top-0 bg-slate-800 text-white text-[9px] sm:text-[10px] uppercase tracking-widest font-bold z-20">
                             <tr class="sticky-header">
-                                <th class="p-4 border-r border-slate-700 text-center">Mes</th>
-                                <th class="p-4 border-r border-slate-700">Fecha Pago</th>
-                                <th class="p-4 border-r border-slate-700 text-right">Pago Regular</th>
-                                <th class="p-4 border-r border-slate-700 text-right">Interés</th>
-                                <th class="p-4 border-r border-slate-700 text-right">Capital</th>
-                                <th class="p-4 border-r border-slate-700 text-center bg-slate-700">Seguro</th>
-                                <th class="p-4 border-r border-slate-700 text-center bg-blue-900">Abono Extra</th>
-                                <th class="p-4 border-r border-slate-700 text-right">Cuota Total</th>
-                                <th class="p-4 border-r border-slate-700 text-right font-black">Saldo</th>
-                                <th class="p-4 text-center bg-slate-700">Estatus</th>
+                                <th class="p-3 sm:p-4 border-r border-slate-700 text-center">Mes</th>
+                                <th class="p-3 sm:p-4 border-r border-slate-700">Fecha Pago</th>
+                                <th class="p-3 sm:p-4 border-r border-slate-700 text-right">Pago Regular</th>
+                                <th class="p-3 sm:p-4 border-r border-slate-700 text-right">Interés</th>
+                                <th class="p-3 sm:p-4 border-r border-slate-700 text-right">Capital</th>
+                                <th class="p-3 sm:p-4 border-r border-slate-700 text-center bg-slate-700">Seguro</th>
+                                <th class="p-3 sm:p-4 border-r border-slate-700 text-center bg-blue-900">Abono Extra</th>
+                                <th class="p-3 sm:p-4 border-r border-slate-700 text-right">Cuota Total</th>
+                                <th class="p-3 sm:p-4 border-r border-slate-700 text-right font-black">Saldo</th>
+                                <th class="p-3 sm:p-4 text-center bg-slate-700">Estatus</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="text-sm text-slate-600">
+                        <tbody id="tableBody" class="text-xs sm:text-sm text-slate-600">
                             <!-- Contenido dinámico -->
                         </tbody>
                     </table>
@@ -248,7 +273,6 @@
         let amortizationData = [];
         let nextFocusId = null;
 
-        // BOTÓN TOP
         window.onscroll = function() {
             const btn = document.getElementById("btn-top");
             if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
@@ -262,14 +286,12 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Lógica Genérica de Acordeón
         function toggleSection(contentId, arrowId, isChart = false) {
             const content = document.getElementById(contentId);
             const arrow = document.getElementById(arrowId);
             const isOpen = content.classList.toggle('open');
             if(arrow) arrow.classList.toggle('rotate-180', isOpen);
             
-            // Reajustar gráficos si es necesario
             if (isChart && isOpen) {
                 setTimeout(() => {
                     Plotly.Plots.resize('chart-balance');
@@ -278,7 +300,6 @@
             }
         }
 
-        // INIT
         document.getElementById('fileInput').addEventListener('change', handleFileUpload);
 
         function cleanValue(val) {
@@ -296,7 +317,6 @@
                 try {
                     amortizationData = [];
                     document.getElementById('tableBody').innerHTML = '';
-
                     const jsonData = JSON.parse(event.target.result);
                     
                     if (jsonData.length > 0) {
@@ -307,8 +327,8 @@
                     
                     amortizationData = jsonData.map(row => ({
                         mes: parseInt(row["Mes"]),
-                        fecha: row["Fecha Pago"],
-                        abono: cleanValue(row["Abono"]),
+                        fecha: row["Fecha Pago"] || row["Fecha"] || "",
+                        abono: cleanValue(row["Abono Extra"] || row["Abono"]),
                         seguro: cleanValue(row["Seguro"] || document.getElementById('input-seguro').value),
                         estatus: (row["Estatus"] || "").toUpperCase()
                     }));
@@ -369,8 +389,7 @@
 
         function recalculateSchedule() {
             CONFIG.montoInicial = parseFloat(document.getElementById('input-monto').value);
-            CONFIG.tasaAnual = parseFloat(document.getElementById('input-tasa').value) / 100;
-            CONFIG.tasaMensual = CONFIG.tasaAnual / 12;
+            CONFIG.tasaMensual = (parseFloat(document.getElementById('input-tasa').value) / 100) / 12;
             CONFIG.cuotaFija = parseFloat(document.getElementById('input-cuota').value);
 
             let currentSaldo = CONFIG.montoInicial;
@@ -539,12 +558,12 @@
                                class="w-16 p-1.5 text-center border border-slate-200 rounded-lg text-slate-600 focus:ring-2 focus:ring-blue-400 outline-none bg-white font-bold">
                     </td>
                     <td class="p-4 text-center border-r border-slate-100 bg-blue-50/50">
-                        <input type="number" id="edit-abono-${index}" value="${row.abono}" 
+                        <input type="number" id="edit-abono-${index}" value="${row.abono.toFixed(2)}" 
                                onfocus="this.select()" onkeydown="handleNav(event, ${index}, 'abono')"
                                onchange="updateField(${index}, 'abono', this.value)"
                                class="w-24 p-1.5 text-center border border-blue-200 rounded-lg font-black text-blue-800 bg-white focus:ring-2 focus:ring-blue-600 outline-none">
                     </td>
-                    <td class="p-4 text-right font-black border-r border-slate-100">${formatRD(row.cuota)}</td>
+                    <td class="p-4 text-right font-black border-r border-slate-100">${formatRD(CONFIG.cuotaFija + row.abono)}</td>
                     <td class="p-4 text-right font-black text-slate-900 border-r border-slate-100">${formatRD(row.saldo)}</td>
                     <td class="p-4 text-center">
                         <input type="text" maxlength="1" id="edit-estatus-${index}" value="${row.estatus}" 
@@ -583,29 +602,87 @@
             recalculateSchedule();
         }
 
-        function exportData(format) {
+        // FORMATO DE NOMBRE DE ARCHIVO PERSONALIZADO
+        function getExportName(ext) {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const MM = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const HH = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            return `AmortizaApp_${yyyy}${MM}${dd}_${HH}${mm}.${ext}`;
+        }
+
+        async function exportData(format) {
             if (amortizationData.length === 0) return;
             const dataV = amortizationData.filter(d => d.visible);
-            const fileName = `analisis_amortizacion_${new Date().toISOString().split('T')[0]}`;
+            const fileName = getExportName(format);
+            
             const exportRows = dataV.map(r => ({
-                "Mes": r.mes, "Fecha Pago": r.fecha, "P. Regular": CONFIG.cuotaFija,
-                "Interés": r.interes.toFixed(2), "Capital": r.capital.toFixed(2), "Seguro": r.seguro.toFixed(2),
-                "Abono": r.abono, "Cuota": r.cuota.toFixed(2), "Saldo": r.saldo.toFixed(2), "Estatus": r.estatus
+                "Mes": r.mes, 
+                "Fecha Pago": r.fecha, 
+                "Pago Regular": CONFIG.cuotaFija.toFixed(2),
+                "Interés": r.interes.toFixed(2), 
+                "Capital": r.capital.toFixed(2), 
+                "Seguro": r.seguro.toFixed(2),
+                "Abono Extra": r.abono.toFixed(2), 
+                "Cuota Total": (CONFIG.cuotaFija + r.abono).toFixed(2), 
+                "Saldo": r.saldo.toFixed(2), 
+                "Estatus": r.estatus
             }));
 
-            if (format === 'json') downloadFile(JSON.stringify(exportRows, null, 2), `${fileName}.json`, 'application/json');
+            if (format === 'json') downloadFile(JSON.stringify(exportRows, null, 2), fileName, 'application/json');
             if (format === 'xlsx') {
                 const ws = XLSX.utils.json_to_sheet(exportRows);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Amortizacion");
-                XLSX.writeFile(wb, `${fileName}.xlsx`);
+                XLSX.writeFile(wb, fileName);
             }
             if (format === 'pdf') {
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('l', 'mm', 'a4');
-                doc.setFontSize(16); doc.text("Análisis de Amortización Real", 14, 15);
-                doc.autoTable({ head: [Object.keys(exportRows[0])], body: exportRows.map(r => Object.values(r)), startY: 25, styles: { fontSize: 7 } });
-                doc.save(`${fileName}.pdf`);
+                const doc = new jsPDF('p', 'mm', 'a4');
+                
+                doc.setFontSize(18);
+                doc.text("Reporte Detallado AmortizaApp", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 22);
+
+                doc.setFontSize(12);
+                doc.text("Resumen del Préstamo:", 14, 32);
+                const summaryData = [
+                    ["Saldo Actual", document.getElementById('stat-balance').innerText],
+                    ["Total Interés Proyectado", document.getElementById('stat-interest').innerText],
+                    ["Ahorro Real Estimado", document.getElementById('stat-savings').innerText],
+                    ["Meses Ahorrados", document.getElementById('stat-months').innerText],
+                    ["Fecha Final Proyectada", document.getElementById('stat-end-date').innerText],
+                    ["Pagado a la Fecha", document.getElementById('stat-total-paid').innerText]
+                ];
+                
+                doc.autoTable({
+                    startY: 35,
+                    head: [["Concepto", "Valor"]],
+                    body: summaryData,
+                    theme: 'grid',
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [51, 65, 85] }
+                });
+
+                try {
+                    const chartImg = await Plotly.toImage('chart-balance', { format: 'png', width: 800, height: 400 });
+                    doc.text("Análisis de Saldo:", 14, doc.lastAutoTable.finalY + 10);
+                    doc.addImage(chartImg, 'PNG', 14, doc.lastAutoTable.finalY + 12, 180, 70);
+                } catch(e) { console.log("Error cargando gráfica al PDF"); }
+
+                doc.text("Tabla de Amortización:", 14, doc.lastAutoTable.finalY + 90);
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 93,
+                    head: [["Mes", "Fecha", "Int", "Cap", "Seg", "Abono", "Saldo", "Est"]],
+                    body: dataV.map(r => [r.mes, r.fecha, r.interes.toFixed(2), r.capital.toFixed(2), r.seguro.toFixed(2), r.abono.toFixed(2), r.saldo.toFixed(2), r.estatus]),
+                    styles: { fontSize: 7 },
+                    headStyles: { fillColor: [31, 41, 55] }
+                });
+
+                doc.save(fileName);
             }
         }
 
@@ -618,7 +695,7 @@
         }
 
         function formatRD(value) {
-            return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(value);
+            return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP', minimumFractionDigits: 2 }).format(value);
         }
 
         function formatDate(date) {
@@ -632,8 +709,9 @@
         }
 
         function resetAll() {
-            amortizationData = [];
-            location.reload();
+            if(confirm("¿Estás seguro de reiniciar todos los datos?")) {
+                location.reload();
+            }
         }
     </script>
 </body>
