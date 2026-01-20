@@ -90,7 +90,7 @@
             </div>
             
             <div class="flex flex-wrap gap-3 w-full md:w-auto">
-                <button onclick="resetAll()" class="flex-1 md:flex-none px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl font-bold transition-colors border border-slate-300 flex items-center justify-center gap-2 shadow-sm">
+                <button onclick="resetAll()" class="flex-1 md:flex-none px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl font-bold transition-colors border border-slate-300 flex items-center gap-2 shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     Reiniciar
                 </button>
@@ -203,7 +203,7 @@
 
         <!-- PANEL 3: Análisis Visual (Gráficos) -->
         <div id="charts-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
-            <button onclick="toggleSection('charts-content', 'charts-arrow', true)" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors">
+            <button onclick="toggleSection('charts-content', 'charts-arrow', true)" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors text-slate-700">
                 <div class="flex items-center gap-2 text-slate-700">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Análisis Visual (Gráficos)</h2>
@@ -220,7 +220,7 @@
 
         <!-- PANEL 4: Detalle de Amortización -->
         <div id="table-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
-            <div class="w-full flex flex-col lg:flex-row justify-between items-center p-5 sm:p-6 bg-slate-50 border-b border-slate-200 gap-4">
+            <div class="w-full flex flex-col sm:flex-row justify-between items-center p-5 sm:p-6 bg-slate-50 border-b border-slate-200 gap-4">
                 <button onclick="toggleSection('table-content-area', 'table-arrow')" class="flex items-center gap-2 text-slate-700 flex-grow text-left">
                     <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     <h2 class="text-base sm:text-lg font-black uppercase tracking-tight">Detalle de Amortización Dinámica</h2>
@@ -555,13 +555,13 @@
                         <input type="number" step="0.01" id="edit-seguro-${index}" value="${row.seguro.toFixed(2)}" 
                                onfocus="this.select()" onkeydown="handleNav(event, ${index}, 'seguro')"
                                onchange="updateField(${index}, 'seguro', this.value)"
-                               class="w-16 p-1.5 text-center border border-slate-200 rounded-lg text-slate-600 focus:ring-2 focus:ring-blue-400 outline-none bg-white font-bold">
+                               class="w-16 p-1.5 text-center border border-slate-200 rounded-lg text-slate-600 focus:ring-2 focus:ring-blue-400 outline-none bg-white">
                     </td>
                     <td class="p-4 text-center border-r border-slate-100 bg-blue-50/50">
                         <input type="number" id="edit-abono-${index}" value="${row.abono.toFixed(2)}" 
                                onfocus="this.select()" onkeydown="handleNav(event, ${index}, 'abono')"
                                onchange="updateField(${index}, 'abono', this.value)"
-                               class="w-24 p-1.5 text-center border border-blue-200 rounded-lg font-black text-blue-800 bg-white focus:ring-2 focus:ring-blue-600 outline-none">
+                               class="w-24 p-1.5 text-center border border-blue-200 rounded-lg text-blue-800 bg-white focus:ring-2 focus:ring-blue-600 outline-none">
                     </td>
                     <td class="p-4 text-right font-black border-r border-slate-100">${formatRD(CONFIG.cuotaFija + row.abono)}</td>
                     <td class="p-4 text-right font-black text-slate-900 border-r border-slate-100">${formatRD(row.saldo)}</td>
@@ -569,7 +569,7 @@
                         <input type="text" maxlength="1" id="edit-estatus-${index}" value="${row.estatus}" 
                                onfocus="this.select()" onkeydown="handleNav(event, ${index}, 'estatus')"
                                onchange="updateField(${index}, 'estatus', this.value)"
-                               class="w-10 p-1.5 text-center border border-slate-300 rounded-lg uppercase font-black focus:ring-2 focus:ring-green-500 outline-none bg-white">
+                               class="w-10 p-1.5 text-center border border-slate-300 rounded-lg uppercase focus:ring-2 focus:ring-green-500 outline-none bg-white">
                     </td>
                 `;
                 body.appendChild(tr);
@@ -676,9 +676,9 @@
                 doc.text("Tabla de Amortización:", 14, doc.lastAutoTable.finalY + 90);
                 doc.autoTable({
                     startY: doc.lastAutoTable.finalY + 93,
-                    head: [["Mes", "Fecha", "Int", "Cap", "Seg", "Abono", "Saldo", "Est"]],
-                    body: dataV.map(r => [r.mes, r.fecha, r.interes.toFixed(2), r.capital.toFixed(2), r.seguro.toFixed(2), r.abono.toFixed(2), r.saldo.toFixed(2), r.estatus]),
-                    styles: { fontSize: 7 },
+                    head: [["Mes", "Fecha Pago", "Pago Regular", "Interés", "Capital", "Seguro", "Abono Extra", "Cuota Total", "Saldo", "Estatus"]],
+                    body: dataV.map(r => [r.mes, r.fecha, CONFIG.cuotaFija.toFixed(2), r.interes.toFixed(2), r.capital.toFixed(2), r.seguro.toFixed(2), r.abono.toFixed(2), (CONFIG.cuotaFija + r.abono).toFixed(2), r.saldo.toFixed(2), r.estatus]),
+                    styles: { fontSize: 6 },
                     headStyles: { fillColor: [31, 41, 55] }
                 });
 
