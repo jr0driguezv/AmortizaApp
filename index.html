@@ -86,7 +86,6 @@
         .collapse-content.open { max-height: 25000px; transition: max-height 0.5s ease-in; }
         .info-btn { @apply text-slate-300 hover:text-blue-500 cursor-pointer transition-colors p-1 rounded-full hover:bg-slate-100; }
         
-        /* Celdas editables impecables */
         .editable-input {
             @apply bg-transparent border-none p-0 text-center outline-none ring-0 focus:ring-0 transition-all font-medium;
             font-size: inherit; color: inherit; width: 100%; min-width: 80px; display: block;
@@ -95,7 +94,6 @@
             box-shadow: none;
         }
 
-        /* Corrección para celdas cuando la fila está pagada (verde) */
         .row-paid .editable-input {
             background-color: transparent !important;
             border: none !important;
@@ -114,13 +112,13 @@
 
     <!-- Modal de Información -->
     <div id="info-modal" class="fixed inset-0 bg-black/60 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative animate-in zoom-in duration-300 text-center">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative animate-in zoom-in duration-300 text-center text-balance">
             <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-4 text-blue-600 mx-auto text-center">
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" style="margin: 0 auto;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
             </div>
             <h3 id="info-title" class="text-xl font-black text-slate-800 mb-2"></h3>
             <p id="info-text" class="text-sm text-slate-600 leading-relaxed"></p>
-            <button onclick="closeInfo()" class="mt-8 w-full py-3 bg-slate-900 text-white font-bold rounded-xl active:scale-95 transition-all">Entendido</button>
+            <button onclick="closeInfo()" class="mt-8 w-full py-3 bg-slate-900 text-white font-bold rounded-xl active:scale-95 transition-all text-xs">Entendido</button>
         </div>
     </div>
 
@@ -145,7 +143,7 @@
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 border-b border-slate-200 pb-6">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight text-balance">AmortizaApp - Gestión Hipotecaria!</h1>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight text-balance text-slate-700">AmortizaApp - Gestión Hipotecaria</h1>
                 <p class="text-slate-500 text-sm">Visualiza tu ahorro real y optimiza tu patrimonio en tiempo real</p>
             </div>
             
@@ -167,9 +165,9 @@
             <div class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-indigo-800 transition-colors cursor-pointer" onclick="toggleSection('cloud-content', 'cloud-arrow')">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
-                    <h2 class="text-base sm:text-lg font-bold">Sincronización en la Nube</h2>
+                    <h2 class="text-base sm:text-lg font-bold text-white">Sincronización en la Nube</h2>
                     <svg onclick="event.stopPropagation(); openConfig()" class="w-5 h-5 info-btn text-indigo-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    <svg onclick="event.stopPropagation(); showInfo('Sincronización', 'Sube tus datos para obtener un código. Úsalo en otro dispositivo para cargar tu progreso sin archivos.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <svg onclick="event.stopPropagation(); showInfo('Sincronización', 'Sube tus datos para obtener un código de 6 dígitos. Úsalo en otro dispositivo para cargar tu progreso sin archivos.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
                 <svg id="cloud-arrow" class="w-6 h-6 text-indigo-300 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
@@ -196,9 +194,9 @@
             </div>
         </div>
 
-        <!-- PANEL 1: Parámetros del Préstamo -->
+        <!-- PANEL 1: Parámetros -->
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 text-slate-700 text-balance">
-            <div onclick="toggleSection('params-content', 'params-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance">
+            <div onclick="toggleSection('params-content', 'params-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Parámetros del Préstamo</h2>
@@ -207,7 +205,7 @@
                 <svg id="params-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
             <div id="params-content" class="collapse-content open">
-                <div class="p-5 sm:p-6 pt-0">
+                <div class="p-5 sm:p-6 pt-0 text-slate-700">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 items-end">
                         <div><label class="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-wider">Monto</label><input id="input-monto" type="number" value="1078210" class="w-full p-3 border border-slate-200 rounded-2xl outline-none bg-slate-50 font-semibold transition-all"></div>
                         <div><label class="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-wider">Tasa Anual (%)</label><input id="input-tasa" type="number" step="0.1" value="14.5" class="w-full p-3 border border-slate-200 rounded-2xl outline-none bg-slate-50 font-semibold transition-all"></div>
@@ -221,26 +219,26 @@
         </div>
 
         <!-- PANEL SIMULADOR -->
-        <div id="simulator-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance">
+        <div id="simulator-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700">
             <div onclick="toggleSection('simulator-content', 'simulator-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
-                <div class="flex items-center gap-2 text-slate-700">
+                <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Simulador de Impacto Inmediato</h2>
-                    <svg onclick="event.stopPropagation(); showInfo('Simulador', 'Prueba cómo cambiaría tu ahorro si aumentaras tu abono mensual fijo.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <svg onclick="event.stopPropagation(); showInfo('Simulador', 'Prueba cómo cambiaría tu ahorro si aumentaras tu abono mensual fijo.')" class="w-5 h-5 info-btn text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
                 <svg id="simulator-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
             <div id="simulator-content" class="collapse-content">
                 <div class="p-6 pt-0 space-y-6 text-center sm:text-left text-balance text-slate-700">
                     <div class="bg-orange-50 p-6 rounded-2xl border border-orange-100">
-                        <label class="block text-xs font-black text-orange-800 mb-4 uppercase tracking-widest text-center sm:text-left">¿Qué pasaría si aumento mi abono mensual en...?</label>
+                        <label class="block text-xs font-black text-orange-800 mb-4 uppercase tracking-widest">¿Qué pasaría si aumento mi abono mensual en...?</label>
                         <div class="flex flex-col sm:flex-row items-center gap-4">
-                            <input type="range" id="sim-extra-range" min="0" max="50000" step="500" value="0" oninput="runSimulation(this.value)" class="w-full h-2 bg-orange-200 rounded-lg appearance-none cursor-pointer text-slate-700">
+                            <input type="range" id="sim-extra-range" min="0" max="50000" step="500" value="0" oninput="runSimulation(this.value)" class="w-full h-2 bg-orange-200 rounded-lg appearance-none cursor-pointer">
                             <span id="sim-extra-value" class="text-2xl font-black text-orange-600 whitespace-nowrap">RD$ 0</span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-center sm:text-left text-slate-700"><p class="text-[10px] text-orange-400 font-bold uppercase text-balance">Ahorro Extra</p><p id="sim-money-saved" class="text-xl font-black text-orange-700">RD$ 0.00</p></div>
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-center sm:text-left text-slate-700"><p class="text-[10px] text-orange-400 font-bold uppercase text-balance">Meses Menos</p><p id="sim-months-saved" class="text-xl font-black text-orange-700">0 meses</p></div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-slate-700"><p class="text-[10px] text-orange-400 font-bold uppercase text-balance">Ahorro Extra</p><p id="sim-money-saved" class="text-xl font-black text-orange-700">RD$ 0.00</p></div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-slate-700"><p class="text-[10px] text-orange-400 font-bold uppercase text-balance">Meses Menos</p><p id="sim-months-saved" class="text-xl font-black text-orange-700">0 meses</p></div>
                         </div>
                         <button onclick="applySimulation()" class="mt-4 w-full py-3 bg-orange-600 text-white font-black rounded-xl active:scale-95 transition-all text-xs">APLICAR ABONO A MESES FALTANTES</button>
                     </div>
@@ -249,21 +247,21 @@
         </div>
 
         <!-- PANEL PATRIMONIO -->
-        <div id="equity-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance">
+        <div id="equity-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance">
             <div onclick="toggleSection('equity-content', 'equity-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Seguimiento de Plusvalía y Patrimonio</h2>
-                    <svg onclick="event.stopPropagation(); showInfo('Patrimonio', 'Compara el valor de mercado con tu deuda actual.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <svg onclick="event.stopPropagation(); showInfo('Patrimonio', 'Compara el valor de mercado con tu deuda actual para conocer tu capital real.')" class="w-5 h-5 info-btn text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
                 <svg id="equity-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
             <div id="equity-content" class="collapse-content">
                 <div class="p-6 pt-0 space-y-6 text-center sm:text-left text-balance text-slate-700">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center sm:text-left text-balance text-slate-700">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center sm:text-left text-balance text-slate-700 text-slate-700">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center sm:text-left text-slate-700"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest text-center sm:text-left">Valor Mercado (RD$)</label><input id="input-market-value" type="number" value="1200000" onchange="calculateEquity()" class="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold text-lg text-center sm:text-left text-slate-700"></div>
-                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center text-emerald-700"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500">Patrimonio Real</p><p id="stat-equity-value" class="text-2xl font-black">RD$ 0.00</p></div>
-                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center text-emerald-700"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500">% Propiedad Real</p><p id="stat-equity-pct" class="text-2xl font-black">0.00%</p></div>
+                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center text-emerald-700"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500 text-balance">Patrimonio Real</p><p id="stat-equity-value" class="text-2xl font-black">RD$ 0.00</p></div>
+                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center text-emerald-700"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500 text-balance">% Propiedad Real</p><p id="stat-equity-pct" class="text-2xl font-black">0.00%</p></div>
                     </div>
                     <div id="chart-equity" class="w-full h-80"></div>
                 </div>
@@ -271,12 +269,12 @@
         </div>
 
         <!-- PANEL COSTO TIEMPO -->
-        <div id="cost-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700">
+        <div id="cost-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance">
             <div onclick="toggleSection('cost-content', 'cost-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
                 <div class="flex items-center gap-2 text-slate-700">
                     <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Análisis de Costo de Oportunidad</h2>
-                    <svg onclick="event.stopPropagation(); showInfo('Costo Tiempo', 'Muestra cuánto pierdes en intereses por cada unidad de tiempo.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <svg onclick="event.stopPropagation(); showInfo('Costo Tiempo', 'Muestra cuánto pierdes en intereses por cada unidad de tiempo.')" class="w-5 h-5 info-btn text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
                 <svg id="cost-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
@@ -285,10 +283,10 @@
                     <div class="bg-rose-50 p-6 rounded-3xl border border-rose-100 text-center">
                         <p class="text-xs font-black text-rose-800 uppercase tracking-widest mb-4 text-balance">Intereses pagados actualmente por cada unidad de tiempo:</p>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left"><p class="text-[10px] text-rose-400 font-bold uppercase">Mes</p><p id="cost-monthly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
-                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left"><p class="text-[10px] text-rose-400 font-bold uppercase">Día</p><p id="cost-daily" class="text-lg font-black text-rose-700">RD$ 0</p></div>
-                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left"><p class="text-[10px] text-rose-400 font-bold uppercase">Hora</p><p id="cost-hourly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
-                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left"><p class="text-[10px] text-rose-400 font-bold uppercase">Minuto</p><p id="cost-minute" class="text-lg font-black text-rose-700">RD$ 0</p></div>
+                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left text-slate-700"><p class="text-[10px] text-rose-400 font-bold uppercase text-balance">Mes</p><p id="cost-monthly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
+                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left text-slate-700"><p class="text-[10px] text-rose-400 font-bold uppercase text-balance">Día</p><p id="cost-daily" class="text-lg font-black text-rose-700">RD$ 0</p></div>
+                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left text-slate-700"><p class="text-[10px] text-rose-400 font-bold uppercase text-balance">Hora</p><p id="cost-hourly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
+                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left text-slate-700"><p class="text-[10px] text-rose-400 font-bold uppercase text-balance">Minuto</p><p id="cost-minute" class="text-lg font-black text-rose-700">RD$ 0</p></div>
                         </div>
                     </div>
                 </div>
@@ -296,21 +294,21 @@
         </div>
 
         <!-- PANEL 2: Resumen Estratégico -->
-        <div id="summary-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700">
+        <div id="summary-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance">
             <div onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 2v-6m-8 13h11a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v11a2 2 0 002 2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold text-slate-700">Resumen Estratégico</h2>
-                    <svg onclick="event.stopPropagation(); showInfo('Indicadores', 'Estado global de tu préstamo.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <svg onclick="event.stopPropagation(); showInfo('Indicadores', 'Estado global de tu préstamo.')" class="w-5 h-5 info-btn text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
                 <svg id="summary-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
-            <div id="summary-content" class="collapse-content open">
+            <div id="summary-content" class="collapse-content">
                 <div class="p-5 sm:p-6 pt-0">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 text-center sm:text-left text-balance text-slate-700">
                         <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 text-center sm:text-left text-slate-700 text-balance"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Actual</p><p id="stat-balance" class="text-xl sm:text-2xl font-black text-slate-800 widget-text-size">RD$ 0.00</p></div>
                         <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 text-blue-700 text-center sm:text-left text-balance">
-                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 text-balance">Total Interés</p>
+                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 text-balance text-balance">Total Interés</p>
                             <p id="stat-interest" class="text-xl sm:text-2xl font-black widget-text-size">RD$ 0.00</p>
                             <p id="stat-interest-pct" class="text-[10px] text-blue-400 mt-1">0% del costo</p>
                         </div>
@@ -319,13 +317,13 @@
                             <p id="stat-savings" class="text-xl sm:text-2xl font-black">RD$ 0.00</p>
                             <p id="stat-months" class="text-[9px] font-bold bg-blue-800 px-2 py-1 rounded-lg mt-2 inline-block">Ahorras 0 meses</p>
                         </div>
-                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 border-l-4 border-l-orange-500 text-orange-700 text-center sm:text-left text-balance"><p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Abonos Extra</p><p id="stat-abonos" class="text-xl sm:text-2xl font-black text-orange-700 widget-text-size">RD$ 0.00</p></div>
+                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 border-l-4 border-l-orange-500 text-orange-700 text-center sm:text-left text-balance text-slate-700"><p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1 text-balance">Abonos Realizados</p><p id="stat-abonos" class="text-xl sm:text-2xl font-black text-orange-700 widget-text-size">RD$ 0.00</p></div>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center sm:text-left text-balance text-slate-700">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase">Fecha Final</p><p id="stat-end-date" class="font-bold text-slate-800">-</p></div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase">Faltan</p><p id="stat-remaining-months" class="font-bold text-slate-800">0 cuotas</p></div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase">Pagado</p><p id="stat-total-paid" class="font-bold text-emerald-600">RD$ 0.00</p></div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase">Carga Int.</p><p id="stat-interest-load" class="font-bold text-rose-600">0.00%</p></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Fecha Final</p><p id="stat-end-date" class="font-bold text-slate-800">-</p></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Faltan</p><p id="stat-remaining-months" class="font-bold text-slate-800">0 cuotas</p></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Pagado</p><p id="stat-total-paid" class="font-bold text-emerald-600">RD$ 0.00</p></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Carga Int.</p><p id="stat-interest-load" class="font-bold text-rose-600">0.00%</p></div>
                     </div>
                     <div class="mt-6 text-center sm:text-left"><button onclick="exportToCalendar()" class="w-full py-3 bg-white text-slate-800 border-2 border-slate-200 rounded-xl font-bold flex items-center justify-center gap-2 text-xs active:scale-95 transition-all hover:bg-slate-50 shadow-sm"><svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>RECORDATORIOS EN CALENDARIO (ICS)</button></div>
                 </div>
@@ -333,18 +331,18 @@
         </div>
 
         <!-- PANEL GRÁFICOS -->
-        <div id="charts-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700">
+        <div id="charts-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance text-slate-700">
             <div onclick="toggleSection('charts-content', 'charts-arrow', true)" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
                 <div class="flex items-center gap-2 text-slate-700">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold text-slate-700">Análisis Visual (Gráficos)</h2>
                     <svg onclick="event.stopPropagation(); showInfo('Gráficas', 'Representación visual de tu deuda y ahorro acumulado.')" class="w-5 h-5 info-btn text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
-                <svg id="charts-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <svg id="charts-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
-            <div id="charts-content" class="collapse-content open">
-                <div class="p-6 pt-0 space-y-8 text-center sm:text-left text-slate-700">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div id="chart-balance" class="w-full h-80"></div><div id="chart-distribution" class="w-full h-80"></div></div>
+            <div id="charts-content" class="collapse-content">
+                <div class="p-6 pt-0 space-y-8 text-center sm:text-left text-slate-700 text-slate-700">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-slate-700"><div id="chart-balance" class="w-full h-80 text-slate-700"></div><div id="chart-distribution" class="w-full h-80 text-slate-700"></div></div>
                     <div id="chart-savings" class="w-full h-80 border-t pt-8 border-slate-100 text-slate-700"></div>
                 </div>
             </div>
@@ -355,32 +353,32 @@
             <div class="w-full flex flex-col lg:flex-row justify-between items-center p-5 sm:p-6 bg-slate-50 border-b border-slate-200 gap-4">
                 <div class="flex items-center gap-2 text-slate-700 flex-grow cursor-pointer" onclick="toggleSection('table-content-area', 'table-arrow')">
                     <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    <h2 class="text-base sm:text-lg font-bold uppercase tracking-tight text-slate-700">Detalle de Amortización Dinámica</h2>
-                    <svg onclick="event.stopPropagation(); showInfo('Tabla', 'Lleva el control real de tus pagos.')" class="w-5 h-5 info-btn text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-700">Detalle de Amortización Dinámica</h2>
+                    <svg onclick="event.stopPropagation(); showInfo('Tabla', 'Lleva el control real de tus pagos.')" class="w-5 h-5 info-btn text-slate-700 text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
-                <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-hide text-slate-700">
-                    <span class="text-[10px] text-slate-400 font-black uppercase mr-2 text-slate-700">Exportar:</span>
+                <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-hide text-slate-700 text-slate-700 text-slate-700 text-slate-700 text-slate-700">
+                    <span class="text-[10px] text-slate-400 font-black uppercase mr-2 text-slate-700 text-slate-700">Exportar:</span>
                     <button onclick="event.stopPropagation(); exportData('xlsx')" class="export-btn bg-emerald-50 border-emerald-200 text-emerald-700 whitespace-nowrap shadow-sm transition-all active:scale-95">XLSX</button>
                     <button onclick="event.stopPropagation(); exportData('pdf')" class="export-btn bg-rose-50 border-rose-200 text-rose-700 whitespace-nowrap shadow-sm transition-all active:scale-95">PDF</button>
                     <button onclick="event.stopPropagation(); exportData('json')" class="export-btn bg-white border-slate-300 text-slate-700 whitespace-nowrap shadow-sm transition-all active:scale-95">JSON</button>
                     <svg id="table-arrow" onclick="event.stopPropagation(); toggleSection('table-content-area', 'table-arrow')" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180 ml-2 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </div>
             </div>
-            <div id="table-content-area" class="collapse-content open">
+            <div id="table-content-area" class="collapse-content">
                 <div class="overflow-x-auto overflow-y-auto max-h-[500px] sm:max-h-[600px] border-t border-slate-100">
-                    <table class="w-full text-left border-collapse table-mobile-container text-slate-700" id="amortizationTable">
+                    <table class="w-full text-left border-collapse table-mobile-container text-slate-700 text-slate-700 text-slate-700 text-slate-700" id="amortizationTable">
                         <thead class="sticky top-0 bg-slate-800 text-white text-[9px] sm:text-[10px] uppercase font-bold z-20">
                             <tr class="sticky-header">
                                 <th class="p-4 border-r border-slate-700 text-center">Mes</th>
-                                <th class="p-4 border-r border-slate-700">Fecha Pago</th>
-                                <th class="p-4 border-r border-slate-700 text-right">Pago Regular</th>
-                                <th class="p-4 border-r border-slate-700 text-right">Interés</th>
-                                <th class="p-4 border-r border-slate-700 text-right">Capital</th>
-                                <th class="p-4 border-r border-slate-700 text-center bg-slate-700" id="header-seguro">Seguro</th>
-                                <th class="p-4 border-r border-slate-700 text-center bg-blue-900" id="header-abono">Abono Extra</th>
-                                <th class="p-4 border-r border-slate-700 text-right font-black">Cuota Total</th>
-                                <th class="p-4 border-r border-slate-700 text-right font-black text-slate-200">Saldo</th>
-                                <th class="p-4 text-center bg-slate-700">Estatus</th>
+                                <th class="p-4 border-r border-slate-700 text-balance">Fecha Pago</th>
+                                <th class="p-4 border-r border-slate-700 text-right text-balance">Pago Regular</th>
+                                <th class="p-4 border-r border-slate-700 text-right text-balance">Interés</th>
+                                <th class="p-4 border-r border-slate-700 text-right text-balance">Capital</th>
+                                <th class="p-4 border-r border-slate-700 text-center bg-slate-700 text-balance" id="header-seguro">Seguro</th>
+                                <th class="p-4 border-r border-slate-700 text-center bg-blue-900 text-balance" id="header-abono">Abono Extra</th>
+                                <th class="p-4 border-r border-slate-700 text-right font-black text-balance">Cuota Total</th>
+                                <th class="p-4 border-r border-slate-700 text-right font-black text-slate-200 text-balance text-balance">Saldo</th>
+                                <th class="p-4 text-center bg-slate-700 text-balance">Estatus</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="text-xs sm:text-sm text-slate-600"></tbody>
@@ -407,7 +405,7 @@
         function saveFirebaseConfig() {
             const input = document.getElementById('firebase-config-input').value.trim();
             try {
-                // 1. LIMPIADOR INTELIGENTE DE CONFIGURACIÓN FIREBASE
+                // 1. LIMPIADOR INTELIGENTE FIREBASE
                 let jsonStr = input;
                 if (input.includes('apiKey:') || !input.includes('"apiKey"')) {
                     jsonStr = input.replace(/^(const|let|var)\s+\w+\s*=\s*/, '');
@@ -655,18 +653,65 @@
             downloadFile(ics, "pagos.ics", "text/calendar");
         }
 
-        function exportData(format) {
+        async function exportData(format) {
             if (amortizationData.length === 0) return;
             const dataV = amortizationData.filter(d => d.visible);
             const ts = new Date().toISOString().replace(/T/, '_').replace(/\..+/, '').replace(/-/g, '').replace(/:/g, '').substring(0, 13);
             const fileName = `AmortizaApp_${ts}.${format}`;
             const exportRows = dataV.map(r => ({ "Mes": r.mes, "Fecha Pago": r.fecha, "Pago Regular": CONFIG.cuotaFija, "Interés": r.interes.toFixed(2), "Capital": r.capital.toFixed(2), "Seguro": r.seguro.toFixed(2), "Abono Extra": r.abono.toFixed(2), "Cuota Total": (CONFIG.cuotaFija + r.abono).toFixed(2), "Saldo": r.saldo.toFixed(2), "Estatus": r.estatus }));
+            
             if (format === 'json') downloadFile(JSON.stringify(exportRows, null, 2), fileName, 'application/json');
             if (format === 'xlsx') { const ws = XLSX.utils.json_to_sheet(exportRows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Amortizacion"); XLSX.writeFile(wb, fileName); }
             if (format === 'pdf') {
-                const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
-                doc.setFontSize(16); doc.text("Reporte Detallado AmortizaApp", 14, 15);
-                doc.autoTable({ startY: 25, head: [["Mes", "Fecha", "Int", "Cap", "Seg", "Abo", "Saldo", "Est"]], body: dataV.map(r => [r.mes, r.fecha, r.interes.toFixed(2), r.capital.toFixed(2), r.seguro.toFixed(2), r.abono.toFixed(2), r.saldo.toFixed(2), r.estatus]), styles: { fontSize: 7 } });
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                
+                doc.setFontSize(18); doc.text("Reporte Detallado AmortizaApp", 14, 15);
+                doc.setFontSize(10); doc.text(`Generado: ${new Date().toLocaleString()}`, 14, 22);
+
+                // 1. Parámetros
+                doc.setFontSize(12); doc.text("Parámetros del Préstamo:", 14, 30);
+                const pData = [
+                    ["Monto", formatRD(CONFIG.montoInicial)],
+                    ["Tasa Anual", (CONFIG.tasaAnual * 100).toFixed(2) + "%"],
+                    ["Cuota", formatRD(CONFIG.cuotaFija)],
+                    ["Seguro", formatRD(CONFIG.seguro)]
+                ];
+                doc.autoTable({ startY: 33, head: [["Concepto", "Valor"]], body: pData, theme: 'grid', styles: { fontSize: 8 } });
+
+                // 2. Costo Oportunidad y Resumen
+                doc.text("Resumen y Costos:", 14, doc.lastAutoTable.finalY + 10);
+                const sData = [
+                    ["Saldo Actual", document.getElementById('stat-balance').innerText],
+                    ["Costo por Mes (Int)", document.getElementById('cost-monthly').innerText],
+                    ["Ahorro Real Logrado", document.getElementById('stat-savings').innerText],
+                    ["Tiempo Ahorrado", document.getElementById('stat-months').innerText]
+                ];
+                doc.autoTable({ startY: doc.lastAutoTable.finalY + 13, head: [["Indicador", "Valor"]], body: sData, theme: 'grid', styles: { fontSize: 8 } });
+
+                // 3. Gráficas (Imágenes)
+                doc.addPage();
+                doc.text("Análisis Visual:", 14, 15);
+                try {
+                    const img1 = await Plotly.toImage('chart-balance', { format: 'png', width: 700, height: 350 });
+                    doc.addImage(img1, 'PNG', 14, 20, 180, 80);
+                    const img2 = await Plotly.toImage('chart-distribution', { format: 'png', width: 700, height: 350 });
+                    doc.addImage(img2, 'PNG', 14, 110, 180, 80);
+                    const img3 = await Plotly.toImage('chart-savings', { format: 'png', width: 700, height: 350 });
+                    doc.addImage(img3, 'PNG', 14, 200, 180, 80);
+                } catch(e) {}
+
+                // 4. Tabla
+                doc.addPage();
+                doc.text("Detalle de Amortización:", 14, 15);
+                doc.autoTable({ 
+                    startY: 20, 
+                    head: [["Mes", "Fecha", "Int", "Cap", "Seg", "Abo", "Saldo", "Est"]], 
+                    body: dataV.map(r => [r.mes, r.fecha, r.interes.toFixed(2), r.capital.toFixed(2), r.seguro.toFixed(2), r.abono.toFixed(2), r.saldo.toFixed(2), r.estatus]), 
+                    styles: { fontSize: 6.5 },
+                    headStyles: { fillColor: [31, 41, 55] }
+                });
+                
                 doc.save(fileName);
             }
         }
@@ -674,7 +719,29 @@
         function downloadFile(content, fileName, mimeType) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], { type: mimeType })); a.download = fileName; a.click(); }
         function formatRD(v) { return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP', minimumFractionDigits: 2 }).format(v); }
         function formatDate(d) { return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
-        function showSections() { ['summary-panel', 'charts-wrapper', 'table-wrapper', 'simulator-panel', 'equity-panel', 'cost-panel'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('hidden'); }); }
+        
+        function showSections() { 
+            // 2. Solo expandir Resumen y Tabla automáticamente
+            const ids = ['summary-panel', 'table-wrapper', 'simulator-panel', 'equity-panel', 'cost-panel', 'charts-wrapper'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.classList.remove('hidden');
+            });
+            
+            // Abrir solo los 2 indicados
+            const toOpen = ['summary-content', 'table-content-area'];
+            const arrows = ['summary-arrow', 'table-arrow'];
+            
+            toOpen.forEach((id, idx) => {
+                const content = document.getElementById(id);
+                if(content && !content.classList.contains('open')) {
+                    content.classList.add('open');
+                    const arrow = document.getElementById(arrows[idx]);
+                    if(arrow) arrow.classList.add('rotate-180');
+                }
+            });
+        }
+
         function resetApp() { if(confirm("¿Reiniciar datos?")) location.reload(); }
     </script>
 </body>
