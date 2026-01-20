@@ -26,30 +26,38 @@
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-        const firebaseConfig = JSON.parse(firebaseConfigStr);
+        // Verificación de configuración para evitar errores en GitHub Pages
+        const getFirebaseConfig = () => {
+            try {
+                return typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            } catch (e) { return null; }
+        };
+
+        const firebaseConfig = getFirebaseConfig();
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'amortiza-app-v1';
         
-        let db, auth;
+        let db = null;
+        let auth = null;
         
-        try {
-            if (firebaseConfig.apiKey) {
+        if (firebaseConfig && firebaseConfig.apiKey) {
+            try {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-            }
-        } catch (e) { console.error("Firebase Init Error", e); }
+            } catch (e) { console.error("Firebase Init Error", e); }
+        }
 
         window.cloudSync = {
             save: async (data, settings) => {
-                if (!auth || !db) throw new Error("Configuración de nube no encontrada.");
+                if (!auth || !db) throw new Error("CONFIG_MISSING");
+                
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
-                } else { await signInAnonymously(auth); }
+                } else {
+                    await signInAnonymously(auth);
+                }
 
                 const user = auth.currentUser;
-                if (!user) throw new Error("Error de autenticación.");
-                
                 const syncCode = user.uid.substring(0, 6).toUpperCase();
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sync', syncCode);
                 
@@ -61,10 +69,13 @@
                 return syncCode;
             },
             load: async (code) => {
-                if (!auth || !db) throw new Error("Configuración de nube no encontrada.");
+                if (!auth || !db) throw new Error("CONFIG_MISSING");
+                
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
-                } else { await signInAnonymously(auth); }
+                } else {
+                    await signInAnonymously(auth);
+                }
 
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sync', code.toUpperCase());
                 const snap = await getDoc(docRef);
@@ -87,17 +98,18 @@
         .collapse-content.open { max-height: 25000px; transition: max-height 0.5s ease-in; }
         .info-btn { @apply text-slate-300 hover:text-blue-500 cursor-pointer transition-colors p-1 rounded-full hover:bg-slate-100; }
         
+        /* Celdas editables corregidas */
         .editable-input {
             @apply bg-transparent border-none p-0 text-center outline-none ring-0 focus:ring-0 transition-all;
-            height: 1.5rem;
-            line-height: 1.5rem;
-            -webkit-appearance: none;
-            appearance: none;
+            height: 100%;
+            width: 100%;
+            min-width: 60px; /* Asegura que se vea el número completo */
+            display: block;
         }
 
         @media (max-width: 640px) {
             input { font-size: 16px !important; }
-            .table-mobile-container td, .table-mobile-container th { padding: 0.4rem 0.2rem !important; font-size: 10px; }
+            .table-mobile-container td, .table-mobile-container th { padding: 0.5rem 0.25rem !important; font-size: 10px; }
             .widget-text-size { font-size: 1.25rem !important; }
         }
     </style>
@@ -125,7 +137,7 @@
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 border-b border-slate-200 pb-6">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">AmortizaApp - Gestión Hipotecaria</h1>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">AmortizaApp - Gestión Hipotecaria!</h1>
                 <p class="text-slate-500 text-sm">Visualiza tu ahorro real y optimiza tu patrimonio en tiempo real</p>
             </div>
             
@@ -148,7 +160,7 @@
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Sincronización en la Nube</h2>
-                    <svg onclick="event.stopPropagation(); showInfo('Sincronización', 'Sube tus datos para obtener un código de 6 dígitos. Úsalo en otro dispositivo para cargar tu progreso sin archivos.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <svg onclick="event.stopPropagation(); showInfo('Sincronización', 'Sube tus datos para obtener un código. Úsalo en otro dispositivo para cargar tu progreso sin archivos.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
                 <svg id="cloud-arrow" class="w-6 h-6 text-indigo-300 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
@@ -200,8 +212,8 @@
         </div>
 
         <!-- PANEL SIMULADOR -->
-        <div id="simulator-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700">
-            <div onclick="toggleSection('simulator-content', 'simulator-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance">
+        <div id="simulator-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance">
+            <div onclick="toggleSection('simulator-content', 'simulator-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Simulador de Impacto Inmediato</h2>
@@ -236,7 +248,7 @@
         <!-- PANEL PATRIMONIO -->
         <div id="equity-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance">
             <div onclick="toggleSection('equity-content', 'equity-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer">
-                <div class="flex items-center gap-2 text-slate-700">
+                <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Seguimiento de Plusvalía y Patrimonio</h2>
                     <svg onclick="event.stopPropagation(); showInfo('Patrimonio', 'Compara el valor de mercado con tu deuda actual para conocer tu capital real.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
@@ -244,9 +256,9 @@
                 <svg id="equity-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
             <div id="equity-content" class="collapse-content">
-                <div class="p-6 pt-0 space-y-6">
+                <div class="p-6 pt-0 space-y-6 text-center sm:text-left">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center sm:text-left"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Valor Mercado (RD$)</label><input id="input-market-value" type="number" value="1200000" onchange="calculateEquity()" class="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold text-lg text-center sm:text-left"></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Valor de Mercado (RD$)</label><input id="input-market-value" type="number" value="1200000" onchange="calculateEquity()" class="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold text-lg text-center sm:text-left"></div>
                         <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center"><p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Patrimonio Real (Equity)</p><p id="stat-equity-value" class="text-2xl font-black text-emerald-700">RD$ 0.00</p></div>
                         <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center"><p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">% Propiedad Real</p><p id="stat-equity-pct" class="text-2xl font-black text-emerald-700">0.00%</p></div>
                     </div>
@@ -281,8 +293,8 @@
         </div>
 
         <!-- PANEL 2: Resumen Estratégico -->
-        <div id="summary-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700">
-            <div onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance">
+        <div id="summary-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance">
+            <div onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 2v-6m-8 13h11a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v11a2 2 0 002 2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Resumen Estratégico</h2>
@@ -419,7 +431,7 @@
                     }));
                     recalculateSchedule();
                     showSections();
-                } catch (err) { alert("Error al procesar JSON."); }
+                } catch (error) { alert("Error al procesar JSON."); }
             };
             reader.readAsText(file);
         }
@@ -486,30 +498,31 @@
             const ahrT = totIB - d.totI;
             const iP = (d.totI / (d.totI + CONFIG.montoInicial)) * 100;
 
-            const safeSet = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-            safeSet('stat-balance', formatRD(d.saldoA));
-            safeSet('stat-interest', formatRD(d.totI));
-            safeSet('stat-interest-pct', `${iP.toFixed(1)}% del costo`);
-            safeSet('stat-savings', formatRD(ahrT));
-            safeSet('stat-months', `Ahorras ${mB - d.lastM} meses`);
-            safeSet('stat-abonos', formatRD(d.totA));
-            safeSet('stat-end-date', d.endD || "-");
-            safeSet('stat-remaining-months', `${d.remC} cuotas`);
-            safeSet('stat-total-paid', formatRD(d.totP));
-            safeSet('stat-interest-load', `${((d.totI / CONFIG.montoInicial) * 100).toFixed(2)}%`);
+            const elId = id => document.getElementById(id);
+            if(elId('stat-balance')) elId('stat-balance').innerText = formatRD(d.saldoA);
+            if(elId('stat-interest')) elId('stat-interest').innerText = formatRD(d.totI);
+            if(elId('stat-interest-pct')) elId('stat-interest-pct').innerText = `${iP.toFixed(1)}% del costo`;
+            if(elId('stat-savings')) elId('stat-savings').innerText = formatRD(ahrT);
+            if(elId('stat-months')) elId('stat-months').innerText = `Ahorras ${mB - d.lastM} meses`;
+            if(elId('stat-abonos')) elId('stat-abonos').innerText = formatRD(d.totA);
+            if(elId('stat-end-date')) elId('stat-end-date').innerText = d.endD || "-";
+            if(elId('stat-remaining-months')) elId('stat-remaining-months').innerText = `${d.remC} cuotas`;
+            if(elId('stat-total-paid')) elId('stat-total-paid').innerText = formatRD(d.totP);
+            if(elId('stat-interest-load')) elId('stat-interest-load').innerText = `${((d.totI / CONFIG.montoInicial) * 100).toFixed(2)}%`;
 
             const lastI = amortizationData.find(x => x.visible && x.estatus !== 'P')?.interes || 0;
-            safeSet('cost-monthly', formatRD(lastI));
-            safeSet('cost-daily', formatRD(lastI / 30));
-            safeSet('cost-hourly', formatRD(lastI / 720));
-            safeSet('cost-minute', formatRD(lastI / 43200));
+            if(elId('cost-monthly')) elId('cost-monthly').innerText = formatRD(lastI);
+            if(elId('cost-daily')) elId('cost-daily').innerText = formatRD(lastI / 30);
+            if(elId('cost-hourly')) elId('cost-hourly').innerText = formatRD(lastI / 720);
+            if(elId('cost-minute')) elId('cost-minute').innerText = formatRD(lastI / 43200);
 
             updateCharts();
         }
 
         function calculateEquity() {
             const mv = parseFloat(document.getElementById('input-market-value').value) || 0;
-            const cb = parseFloat(document.getElementById('stat-balance').innerText.replace(/[RD$,]/g, '')) || 0;
+            const cbStr = document.getElementById('stat-balance')?.innerText.replace(/[RD$,]/g, '') || "0";
+            const cb = parseFloat(cbStr);
             const eq = Math.max(0, mv - cb);
             const pct = mv > 0 ? (eq / mv) * 100 : 0;
             const vEl = document.getElementById('stat-equity-value');
@@ -533,7 +546,13 @@
                 document.getElementById('sync-code-display').innerText = code;
                 document.getElementById('sync-code-box').classList.remove('hidden');
                 alert(`¡Guardado! Código: ${code}`);
-            } catch(e) { alert("Error al sincronizar. Revisa que estés usando GitHub Pages."); }
+            } catch(e) { 
+                if (e.message === "CONFIG_MISSING") {
+                    alert("Esta función requiere la configuración de base de datos activa del entorno. Asegúrate de estar usándola en la plataforma original o configurar tu propio Firebase.");
+                } else {
+                    alert("Error al sincronizar. Revisa tu conexión."); 
+                }
+            }
         }
 
         async function downloadFromCloud() {
@@ -550,13 +569,19 @@
                 document.getElementById('input-fecha').value = settings.f;
                 document.getElementById('input-market-value').value = settings.mv || 1200000;
                 amortizationData = data; recalculateSchedule(); showSections(); alert("¡Cargado!");
-            } catch(e) { alert("Error al descargar."); }
+            } catch(e) { 
+                if (e.message === "CONFIG_MISSING") {
+                    alert("Esta función requiere la configuración de base de datos activa del entorno.");
+                } else {
+                    alert("Error al descargar."); 
+                }
+            }
         }
 
         function updateCharts() {
             const v = amortizationData.filter(x => x.visible);
             if(v.length === 0) return;
-            Plotly.newPlot('chart-balance', [{ x: v.map(x => x.mes), y: v.map(x => x.saldo), type: 'scatter', mode: 'lines', line: { color: '#1e293b', width: 4 }, fill: 'tozeroy' }], { title: 'Saldo Pendiente', margin: { t: 40, b: 40, l: 60, r: 20 } });
+            Plotly.newPlot('chart-balance', [{ x: v.map(x => x.mes), y: v.map(x => x.saldo), type: 'scatter', mode: 'lines', line: { color: '#1e293b', width: 4 }, fill: 'tozeroy' }], { margin: { t: 40, b: 40, l: 60, r: 20 } });
             Plotly.newPlot('chart-distribution', [{ x: v.map(x => x.mes), y: v.map(x => x.capital + x.abono), name: 'Capital', type: 'bar', marker: { color: '#10b981' } }, { x: v.map(x => x.mes), y: v.map(x => x.interes), name: 'Interés', type: 'bar', marker: { color: '#ef4444' } }], { barmode: 'stack', margin: { t: 40, b: 40, l: 60, r: 20 } });
             let r = 0; Plotly.newPlot('chart-savings', [{ x: v.map(x => x.mes), y: v.map(x => { r += 200; return r; }), fill: 'tozeroy', type: 'scatter', mode: 'lines', line: { color: '#f59e0b' } }], { title: 'Ahorro Acumulado', margin: { t: 40, b: 40, l: 60, r: 20 } });
         }
@@ -565,11 +590,7 @@
             const b = document.getElementById('tableBody'); b.innerHTML = '';
             const maxI = Math.max(...amortizationData.map(x => x.interes), 1);
             
-            const segWidth = document.getElementById('header-seguro')?.offsetWidth || 80;
-            const aboWidth = document.getElementById('header-abono')?.offsetWidth || 100;
-            const estWidth = document.getElementById('header-estatus')?.offsetWidth || 60;
-
-            amortizationData.forEach((row, i) => {
+            amortizationData.forEach((row, idx) => {
                 if(!row.visible) return;
                 const tr = document.createElement('tr');
                 tr.className = `border-b border-slate-100 transition-colors ${row.estatus === 'P' ? 'row-paid' : 'hover:bg-slate-50'}`;
@@ -581,15 +602,15 @@
                     <td class="p-4 text-right border-r font-medium text-rose-600" style="background-color: ${heat}">${formatRD(row.interes)}</td>
                     <td class="p-4 text-right border-r font-medium text-emerald-700">${formatRD(row.capital)}</td>
                     <td class="p-4 text-center border-r">
-                        <input id="edit-seguro-${i}" type="number" step="0.01" value="${row.seguro.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${i}, 'seguro')" onchange="updateField(${i}, 'seguro', this.value)" class="editable-input" style="width: ${segWidth-10}px">
+                        <input id="edit-seguro-${idx}" type="number" step="0.01" value="${row.seguro.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'seguro')" onchange="updateField(${idx}, 'seguro', this.value)" class="editable-input" style="max-width: 80px;">
                     </td>
                     <td class="p-4 text-center border-r bg-blue-50/50">
-                        <input id="edit-abono-${i}" type="number" value="${row.abono.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${i}, 'abono')" onchange="updateField(${i}, 'abono', this.value)" class="editable-input text-blue-800" style="width: ${aboWidth-10}px">
+                        <input id="edit-abono-${idx}" type="number" value="${row.abono.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'abono')" onchange="updateField(${idx}, 'abono', this.value)" class="editable-input text-blue-800" style="max-width: 100px;">
                     </td>
                     <td class="p-4 text-right font-black border-r">${formatRD(CONFIG.cuotaFija + row.abono)}</td>
                     <td class="p-4 text-right font-black text-slate-900 border-r">${formatRD(row.saldo)}</td>
                     <td class="p-4 text-center">
-                        <input id="edit-estatus-${i}" type="text" maxlength="1" value="${row.estatus}" onfocus="this.select()" onkeydown="handleNav(event, ${i}, 'estatus')" onchange="updateField(${i}, 'estatus', this.value)" class="editable-input uppercase" style="width: ${estWidth-10}px">
+                        <input id="edit-estatus-${idx}" type="text" maxlength="1" value="${row.estatus}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'estatus')" onchange="updateField(${idx}, 'estatus', this.value)" class="editable-input uppercase font-bold" style="max-width: 60px;">
                     </td>
                 `;
                 b.appendChild(tr);
