@@ -26,59 +26,45 @@
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Verificación de configuración para evitar errores en GitHub Pages
         const getFirebaseConfig = () => {
+            const saved = localStorage.getItem('amortiza_firebase_config');
+            if (saved) return JSON.parse(saved);
             try {
                 return typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
             } catch (e) { return null; }
         };
 
-        const firebaseConfig = getFirebaseConfig();
+        const config = getFirebaseConfig();
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'amortiza-app-v1';
+        let db = null; let auth = null;
         
-        let db = null;
-        let auth = null;
-        
-        if (firebaseConfig && firebaseConfig.apiKey) {
+        if (config && config.apiKey) {
             try {
-                const app = initializeApp(firebaseConfig);
+                const app = initializeApp(config);
                 db = getFirestore(app);
                 auth = getAuth(app);
             } catch (e) { console.error("Firebase Init Error", e); }
         }
 
         window.cloudSync = {
+            isConfigured: () => !!(db && auth),
             save: async (data, settings) => {
                 if (!auth || !db) throw new Error("CONFIG_MISSING");
-                
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
+                } else { await signInAnonymously(auth); }
                 const user = auth.currentUser;
                 const syncCode = user.uid.substring(0, 6).toUpperCase();
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sync', syncCode);
-                
-                await setDoc(docRef, {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sync', syncCode), {
                     payload: JSON.stringify({ data, settings }),
-                    timestamp: new Date().toISOString(),
-                    userId: user.uid
+                    timestamp: new Date().toISOString()
                 });
                 return syncCode;
             },
             load: async (code) => {
                 if (!auth || !db) throw new Error("CONFIG_MISSING");
-                
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sync', code.toUpperCase());
-                const snap = await getDoc(docRef);
+                await signInAnonymously(auth);
+                const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sync', code.toUpperCase()));
                 return snap.exists() ? JSON.parse(snap.data().payload) : null;
             }
         };
@@ -98,13 +84,13 @@
         .collapse-content.open { max-height: 25000px; transition: max-height 0.5s ease-in; }
         .info-btn { @apply text-slate-300 hover:text-blue-500 cursor-pointer transition-colors p-1 rounded-full hover:bg-slate-100; }
         
-        /* Celdas editables corregidas */
+        /* 2. Celdas editables ultra-planas corregidas */
         .editable-input {
-            @apply bg-transparent border-none p-0 text-center outline-none ring-0 focus:ring-0 transition-all;
-            height: 100%;
-            width: 100%;
-            min-width: 60px; /* Asegura que se vea el número completo */
-            display: block;
+            @apply bg-transparent border-none p-0 text-center outline-none ring-0 focus:ring-0 transition-all font-medium;
+            font-size: inherit; color: inherit; width: 100%; min-width: 75px; display: block;
+            border-radius: 0; font-variant-numeric: tabular-nums;
+            -webkit-appearance: none;
+            box-shadow: none;
         }
 
         @media (max-width: 640px) {
@@ -118,13 +104,26 @@
 
     <!-- Modal de Información -->
     <div id="info-modal" class="fixed inset-0 bg-black/60 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative animate-in zoom-in duration-300 text-center text-balance">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative animate-in zoom-in duration-300 text-center">
             <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-4 text-blue-600 mx-auto">
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
             </div>
             <h3 id="info-title" class="text-xl font-black text-slate-800 mb-2"></h3>
             <p id="info-text" class="text-sm text-slate-600 leading-relaxed"></p>
             <button onclick="closeInfo()" class="mt-8 w-full py-3 bg-slate-900 text-white font-bold rounded-xl active:scale-95 transition-all">Entendido</button>
+        </div>
+    </div>
+
+    <!-- 1. Modal Config Firebase (Nuevo) -->
+    <div id="config-modal" class="fixed inset-0 bg-black/60 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
+            <h3 class="text-lg font-black text-slate-800 mb-2">Configurar Nube Personal</h3>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed text-balance">Pega el objeto <code>firebaseConfig</code> de tu proyecto de Firebase Console para habilitar la sincronización en GitHub Pages.</p>
+            <textarea id="firebase-config-input" class="w-full h-40 p-3 text-[10px] font-mono bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder='{ "apiKey": "...", "authDomain": "...", ... }'></textarea>
+            <div class="flex gap-2 mt-4">
+                <button onclick="saveFirebaseConfig()" class="flex-grow py-3 bg-indigo-600 text-white font-bold rounded-xl active:scale-95 transition-all text-xs">Guardar y Recargar</button>
+                <button onclick="closeConfig()" class="px-6 py-3 bg-slate-100 text-slate-500 font-bold rounded-xl active:scale-95 transition-all text-xs">Cerrar</button>
+            </div>
         </div>
     </div>
 
@@ -137,7 +136,7 @@
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 border-b border-slate-200 pb-6">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">AmortizaApp - Gestión Hipotecaria!</h1>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">AmortizaApp - Gestión Hipotecaria</h1>
                 <p class="text-slate-500 text-sm">Visualiza tu ahorro real y optimiza tu patrimonio en tiempo real</p>
             </div>
             
@@ -160,6 +159,8 @@
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Sincronización en la Nube</h2>
+                    <!-- 1. Icono engranaje añadido antes de la info -->
+                    <svg onclick="event.stopPropagation(); openConfig()" class="w-5 h-5 info-btn text-indigo-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <svg onclick="event.stopPropagation(); showInfo('Sincronización', 'Sube tus datos para obtener un código. Úsalo en otro dispositivo para cargar tu progreso sin archivos.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
                 <svg id="cloud-arrow" class="w-6 h-6 text-indigo-300 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -222,22 +223,16 @@
                 <svg id="simulator-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
             <div id="simulator-content" class="collapse-content">
-                <div class="p-6 pt-0 space-y-6">
-                    <div class="bg-orange-50 p-6 rounded-2xl border border-orange-100 text-center sm:text-left">
+                <div class="p-6 pt-0 space-y-6 text-center sm:text-left">
+                    <div class="bg-orange-50 p-6 rounded-2xl border border-orange-100">
                         <label class="block text-xs font-black text-orange-800 mb-4 uppercase tracking-widest">¿Qué pasaría si aumento mi abono mensual en...?</label>
                         <div class="flex flex-col sm:flex-row items-center gap-4">
                             <input type="range" id="sim-extra-range" min="0" max="50000" step="500" value="0" oninput="runSimulation(this.value)" class="w-full h-2 bg-orange-200 rounded-lg appearance-none cursor-pointer">
                             <span id="sim-extra-value" class="text-2xl font-black text-orange-600 whitespace-nowrap">RD$ 0</span>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 text-balance">
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100">
-                                <p class="text-[10px] text-orange-400 font-bold uppercase">Ahorro Extra Proyectado</p>
-                                <p id="sim-money-saved" class="text-xl font-black text-orange-700">RD$ 0.00</p>
-                            </div>
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100">
-                                <p class="text-[10px] text-orange-400 font-bold uppercase">Meses Reducidos Extra</p>
-                                <p id="sim-months-saved" class="text-xl font-black text-orange-700">0 meses</p>
-                            </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100"><p class="text-[10px] text-orange-400 font-bold uppercase text-balance">Ahorro Extra Proyectado</p><p id="sim-money-saved" class="text-xl font-black text-orange-700">RD$ 0.00</p></div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100"><p class="text-[10px] text-orange-400 font-bold uppercase text-balance">Meses Reducidos Extra</p><p id="sim-months-saved" class="text-xl font-black text-orange-700">0 meses</p></div>
                         </div>
                         <button onclick="applySimulation()" class="mt-4 w-full py-3 bg-orange-600 text-white font-black rounded-xl active:scale-95 transition-all text-xs">APLICAR ESTE ABONO A TODOS LOS MESES FALTANTES</button>
                     </div>
@@ -258,9 +253,9 @@
             <div id="equity-content" class="collapse-content">
                 <div class="p-6 pt-0 space-y-6 text-center sm:text-left">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Valor de Mercado (RD$)</label><input id="input-market-value" type="number" value="1200000" onchange="calculateEquity()" class="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold text-lg text-center sm:text-left"></div>
-                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center"><p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Patrimonio Real (Equity)</p><p id="stat-equity-value" class="text-2xl font-black text-emerald-700">RD$ 0.00</p></div>
-                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center"><p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">% Propiedad Real</p><p id="stat-equity-pct" class="text-2xl font-black text-emerald-700">0.00%</p></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest text-center sm:text-left">Valor de Mercado (RD$)</label><input id="input-market-value" type="number" value="1200000" onchange="calculateEquity()" class="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold text-lg text-center sm:text-left"></div>
+                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center text-emerald-700"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500">Patrimonio Real</p><p id="stat-equity-value" class="text-2xl font-black">RD$ 0.00</p></div>
+                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center text-emerald-700"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500">% Propiedad Real</p><p id="stat-equity-pct" class="text-2xl font-black">0.00%</p></div>
                     </div>
                     <div id="chart-equity" class="w-full h-80"></div>
                 </div>
@@ -269,7 +264,7 @@
 
         <!-- PANEL COSTO TIEMPO -->
         <div id="cost-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance">
-            <div onclick="toggleSection('cost-content', 'cost-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer">
+            <div onclick="toggleSection('cost-content', 'cost-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Análisis de Costo de Oportunidad</h2>
@@ -280,12 +275,12 @@
             <div id="cost-content" class="collapse-content">
                 <div class="p-6 pt-0">
                     <div class="bg-rose-50 p-6 rounded-3xl border border-rose-100 text-center">
-                        <p class="text-xs font-black text-rose-800 uppercase tracking-widest mb-4">Intereses pagados actualmente por:</p>
+                        <p class="text-xs font-black text-rose-800 uppercase tracking-widest mb-4 text-balance">Intereses pagados actualmente por cada unidad de tiempo:</p>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance"><p class="text-[10px] text-rose-400 font-bold uppercase">Mes</p><p id="cost-monthly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
-                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance"><p class="text-[10px] text-rose-400 font-bold uppercase">Día</p><p id="cost-daily" class="text-lg font-black text-rose-700">RD$ 0</p></div>
-                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance"><p class="text-[10px] text-rose-400 font-bold uppercase">Hora</p><p id="cost-hourly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
-                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance"><p class="text-[10px] text-rose-400 font-bold uppercase">Minuto</p><p id="cost-minute" class="text-lg font-black text-rose-700">RD$ 0</p></div>
+                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left"><p class="text-[10px] text-rose-400 font-bold uppercase">Mes</p><p id="cost-monthly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
+                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left"><p class="text-[10px] text-rose-400 font-bold uppercase">Día</p><p id="cost-daily" class="text-lg font-black text-rose-700">RD$ 0</p></div>
+                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left"><p class="text-[10px] text-rose-400 font-bold uppercase">Hora</p><p id="cost-hourly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
+                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left"><p class="text-[10px] text-rose-400 font-bold uppercase">Minuto</p><p id="cost-minute" class="text-lg font-black text-rose-700">RD$ 0</p></div>
                         </div>
                     </div>
                 </div>
@@ -294,7 +289,7 @@
 
         <!-- PANEL 2: Resumen Estratégico -->
         <div id="summary-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance">
-            <div onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer">
+            <div onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 2v-6m-8 13h11a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v11a2 2 0 002 2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Resumen Estratégico</h2>
@@ -304,21 +299,21 @@
             </div>
             <div id="summary-content" class="collapse-content open">
                 <div class="p-5 sm:p-6 pt-0">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
-                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 text-center sm:text-left"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Actual</p><p id="stat-balance" class="text-xl sm:text-2xl font-black text-slate-800 widget-text-size">RD$ 0.00</p></div>
-                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 text-blue-700 text-center sm:text-left">
-                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Total Interés</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 text-center sm:text-left">
+                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Actual</p><p id="stat-balance" class="text-xl sm:text-2xl font-black text-slate-800 widget-text-size">RD$ 0.00</p></div>
+                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 text-blue-700">
+                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 text-balance">Total Interés</p>
                             <p id="stat-interest" class="text-xl sm:text-2xl font-black widget-text-size">RD$ 0.00</p>
                             <p id="stat-interest-pct" class="text-[10px] text-blue-400 mt-1">0% del costo</p>
                         </div>
-                        <div class="bg-blue-900 p-5 sm:p-6 rounded-2xl shadow-xl border border-blue-800 text-white border-l-4 border-l-blue-400 text-center sm:text-left text-balance">
+                        <div class="bg-blue-900 p-5 sm:p-6 rounded-2xl shadow-xl border border-blue-800 text-white border-l-4 border-l-blue-400 text-balance">
                             <p class="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1">Ahorro Real Logrado</p>
                             <p id="stat-savings" class="text-xl sm:text-2xl font-black">RD$ 0.00</p>
                             <p id="stat-months" class="text-[9px] font-bold bg-blue-800 px-2 py-1 rounded-lg mt-2 inline-block">Ahorras 0 meses</p>
                         </div>
-                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 border-l-4 border-l-orange-500 text-center sm:text-left"><p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Abonos Realizados</p><p id="stat-abonos" class="text-xl sm:text-2xl font-black text-orange-700 widget-text-size">RD$ 0.00</p></div>
+                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 border-l-4 border-l-orange-500"><p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Abonos Realizados</p><p id="stat-abonos" class="text-xl sm:text-2xl font-black text-orange-700 widget-text-size">RD$ 0.00</p></div>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center sm:text-left text-balance">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center sm:text-left">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase">Fecha Final</p><p id="stat-end-date" class="font-bold text-slate-800">-</p></div>
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase">Faltan</p><p id="stat-remaining-months" class="font-bold text-slate-800">0 cuotas</p></div>
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase">Pagado</p><p id="stat-total-paid" class="font-bold text-emerald-600">RD$ 0.00</p></div>
@@ -329,17 +324,17 @@
             </div>
         </div>
 
-        <!-- PANEL 3: Análisis Visual -->
-        <div id="charts-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700">
-            <div onclick="toggleSection('charts-content', 'charts-arrow', true)" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance">
+        <!-- PANEL GRÁFICOS -->
+        <div id="charts-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance">
+            <div onclick="toggleSection('charts-content', 'charts-arrow', true)" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Análisis Visual (Gráficos)</h2>
-                    <svg onclick="event.stopPropagation(); showInfo('Gráficas', 'Representación visual de la caída de tu deuda y ahorro acumulado.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <svg onclick="event.stopPropagation(); showInfo('Gráficas', 'Representación visual de tu deuda y ahorro acumulado.')" class="w-5 h-5 info-btn" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
-                <svg id="charts-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <svg id="charts-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
-            <div id="charts-content" class="collapse-content">
+            <div id="charts-content" class="collapse-content open">
                 <div class="p-6 pt-0 space-y-8">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div id="chart-balance" class="w-full h-80"></div><div id="chart-distribution" class="w-full h-80"></div></div>
                     <div id="chart-savings" class="w-full h-80 border-t pt-8 border-slate-100"></div>
@@ -347,7 +342,7 @@
             </div>
         </div>
 
-        <!-- PANEL 4: Detalle Amortización -->
+        <!-- PANEL TABLA -->
         <div id="table-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
             <div class="w-full flex flex-col lg:flex-row justify-between items-center p-5 sm:p-6 bg-slate-50 border-b border-slate-200 gap-4">
                 <div class="flex items-center gap-2 text-slate-700 flex-grow cursor-pointer" onclick="toggleSection('table-content-area', 'table-arrow')">
@@ -357,9 +352,9 @@
                 </div>
                 <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-hide">
                     <span class="text-[10px] text-slate-400 font-black uppercase mr-2">Exportar:</span>
-                    <button onclick="event.stopPropagation(); exportData('xlsx')" class="export-btn bg-emerald-50 border-emerald-200 text-emerald-700 whitespace-nowrap">XLSX</button>
-                    <button onclick="event.stopPropagation(); exportData('pdf')" class="export-btn bg-rose-50 border-rose-200 text-rose-700 whitespace-nowrap">PDF</button>
-                    <button onclick="event.stopPropagation(); exportData('json')" class="export-btn bg-white border-slate-300 text-slate-700 whitespace-nowrap">JSON</button>
+                    <button onclick="event.stopPropagation(); exportData('xlsx')" class="export-btn bg-emerald-50 border-emerald-200 text-emerald-700 whitespace-nowrap shadow-sm transition-all active:scale-95">XLSX</button>
+                    <button onclick="event.stopPropagation(); exportData('pdf')" class="export-btn bg-rose-50 border-rose-200 text-rose-700 whitespace-nowrap shadow-sm transition-all active:scale-95">PDF</button>
+                    <button onclick="event.stopPropagation(); exportData('json')" class="export-btn bg-white border-slate-300 text-slate-700 whitespace-nowrap shadow-sm transition-all active:scale-95">JSON</button>
                     <svg id="table-arrow" onclick="event.stopPropagation(); toggleSection('table-content-area', 'table-arrow')" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180 ml-2 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </div>
             </div>
@@ -373,11 +368,11 @@
                                 <th class="p-4 border-r border-slate-700 text-right">Pago Regular</th>
                                 <th class="p-4 border-r border-slate-700 text-right">Interés</th>
                                 <th class="p-4 border-r border-slate-700 text-right">Capital</th>
-                                <th class="p-4 border-r border-slate-700 text-center bg-slate-700" id="header-seguro">Seguro</th>
-                                <th class="p-4 border-r border-slate-700 text-center bg-blue-900" id="header-abono">Abono Extra</th>
+                                <th class="p-4 border-r border-slate-700 text-center bg-slate-700">Seguro</th>
+                                <th class="p-4 border-r border-slate-700 text-center bg-blue-900">Abono Extra</th>
                                 <th class="p-4 border-r border-slate-700 text-right font-black">Cuota Total</th>
                                 <th class="p-4 border-r border-slate-700 text-right font-black text-slate-200">Saldo</th>
-                                <th class="p-4 text-center bg-slate-700" id="header-estatus">Estatus</th>
+                                <th class="p-4 text-center bg-slate-700">Estatus</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="text-xs sm:text-sm text-slate-600"></tbody>
@@ -393,21 +388,28 @@
         let nextFocusId = null;
 
         function showInfo(title, text) { 
-            const t = document.getElementById('info-title');
-            const p = document.getElementById('info-text');
-            if(t && p) { t.innerText = title; p.innerText = text; document.getElementById('info-modal').classList.remove('hidden'); }
+            document.getElementById('info-title').innerText = title; 
+            document.getElementById('info-text').innerText = text; 
+            document.getElementById('info-modal').classList.remove('hidden'); 
         }
         function closeInfo() { document.getElementById('info-modal').classList.add('hidden'); }
+        function openConfig() { document.getElementById('config-modal').classList.remove('hidden'); }
+        function closeConfig() { document.getElementById('config-modal').classList.add('hidden'); }
+        
+        function saveFirebaseConfig() {
+            const input = document.getElementById('firebase-config-input').value;
+            try { JSON.parse(input); localStorage.setItem('amortiza_firebase_config', input); location.reload(); }
+            catch(e) { alert("Configuración no válida. Debe ser un JSON."); }
+        }
+
         window.onscroll = function() { document.getElementById("btn-top").style.display = (window.scrollY > 300) ? "block" : "none"; };
         function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
         function toggleSection(id, arrowId, isChart = false) {
-            const el = document.getElementById(id);
-            const arrow = document.getElementById(arrowId);
-            if(!el) return;
-            const isOpen = el.classList.toggle('open');
-            if(arrow) arrow.classList.toggle('rotate-180', isOpen);
-            if(isChart && isOpen) setTimeout(() => { Plotly.Plots.resize('chart-balance'); Plotly.Plots.resize('chart-distribution'); Plotly.Plots.resize('chart-savings'); Plotly.Plots.resize('chart-equity'); }, 300);
+            const el = document.getElementById(id); const arrow = document.getElementById(arrowId);
+            if(!el) return; el.classList.toggle('open');
+            if(arrow) arrow.classList.toggle('rotate-180');
+            if(isChart && el.classList.contains('open')) setTimeout(() => { Plotly.Plots.resize('chart-balance'); Plotly.Plots.resize('chart-distribution'); Plotly.Plots.resize('chart-savings'); Plotly.Plots.resize('chart-equity'); }, 300);
         }
 
         document.getElementById('fileInput').addEventListener('change', handleFileUpload);
@@ -415,13 +417,11 @@
         function cleanValue(v) { return (v === null || v === undefined || v === "") ? 0 : (typeof v === 'number' ? v : parseFloat(String(v).replace(/,/g, '')) || 0); }
 
         function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+            const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(ev) {
                 try {
                     const jsonData = JSON.parse(ev.target.result);
-                    if (!Array.isArray(jsonData)) throw new Error();
                     amortizationData = jsonData.map(row => ({
                         mes: parseInt(row["Mes"]),
                         fecha: row["Fecha Pago"] || row["Fecha"] || "",
@@ -429,9 +429,8 @@
                         seguro: cleanValue(row["Seguro"] || 610.70),
                         estatus: (row["Estatus"] || "").toUpperCase()
                     }));
-                    recalculateSchedule();
-                    showSections();
-                } catch (error) { alert("Error al procesar JSON."); }
+                    recalculateSchedule(); showSections();
+                } catch (err) { alert("Error al procesar JSON."); }
             };
             reader.readAsText(file);
         }
@@ -452,8 +451,7 @@
                 currF.setMonth(currF.getMonth() + 1);
                 currS -= (c - (currS * (t/12)) - s);
             }
-            recalculateSchedule();
-            showSections();
+            recalculateSchedule(); showSections();
         }
 
         function recalculateSchedule() {
@@ -482,10 +480,7 @@
             renderTable();
             updateDashboardStats({ totA, totI, totS, saldoA, lastM, endD, remC, totP });
             calculateEquity();
-            if (nextFocusId) { 
-                const tid = nextFocusId; nextFocusId = null; 
-                setTimeout(() => { const el = document.getElementById(tid); if(el) { el.focus(); el.select(); } }, 50); 
-            }
+            if (nextFocusId) { const tid = nextFocusId; nextFocusId = null; setTimeout(() => { const el = document.getElementById(tid); if(el) { el.focus(); el.select(); } }, 50); }
         }
 
         function updateDashboardStats(d) {
@@ -499,23 +494,23 @@
             const iP = (d.totI / (d.totI + CONFIG.montoInicial)) * 100;
 
             const elId = id => document.getElementById(id);
-            if(elId('stat-balance')) elId('stat-balance').innerText = formatRD(d.saldoA);
-            if(elId('stat-interest')) elId('stat-interest').innerText = formatRD(d.totI);
-            if(elId('stat-interest-pct')) elId('stat-interest-pct').innerText = `${iP.toFixed(1)}% del costo`;
-            if(elId('stat-savings')) elId('stat-savings').innerText = formatRD(ahrT);
-            if(elId('stat-months')) elId('stat-months').innerText = `Ahorras ${mB - d.lastM} meses`;
-            if(elId('stat-abonos')) elId('stat-abonos').innerText = formatRD(d.totA);
-            if(elId('stat-end-date')) elId('stat-end-date').innerText = d.endD || "-";
-            if(elId('stat-remaining-months')) elId('stat-remaining-months').innerText = `${d.remC} cuotas`;
-            if(elId('stat-total-paid')) elId('stat-total-paid').innerText = formatRD(d.totP);
-            if(elId('stat-interest-load')) elId('stat-interest-load').innerText = `${((d.totI / CONFIG.montoInicial) * 100).toFixed(2)}%`;
+            const safeSet = (id, val) => { if(elId(id)) elId(id).innerText = val; };
+            safeSet('stat-balance', formatRD(d.saldoA));
+            safeSet('stat-interest', formatRD(d.totI));
+            safeSet('stat-interest-pct', `${iP.toFixed(1)}% del costo`);
+            safeSet('stat-savings', formatRD(ahrT));
+            safeSet('stat-months', `${mB - d.lastM} meses menos`);
+            safeSet('stat-abonos', formatRD(d.totA));
+            safeSet('stat-end-date', d.endD || "-");
+            safeSet('stat-remaining-months', `${d.remC} cuotas`);
+            safeSet('stat-total-paid', formatRD(d.totP));
+            safeSet('stat-interest-load', `${((d.totI / CONFIG.montoInicial) * 100).toFixed(2)}%`);
 
             const lastI = amortizationData.find(x => x.visible && x.estatus !== 'P')?.interes || 0;
-            if(elId('cost-monthly')) elId('cost-monthly').innerText = formatRD(lastI);
-            if(elId('cost-daily')) elId('cost-daily').innerText = formatRD(lastI / 30);
-            if(elId('cost-hourly')) elId('cost-hourly').innerText = formatRD(lastI / 720);
-            if(elId('cost-minute')) elId('cost-minute').innerText = formatRD(lastI / 43200);
-
+            safeSet('cost-monthly', formatRD(lastI));
+            safeSet('cost-daily', formatRD(lastI / 30));
+            safeSet('cost-hourly', formatRD(lastI / 720));
+            safeSet('cost-minute', formatRD(lastI / 43200));
             updateCharts();
         }
 
@@ -525,34 +520,26 @@
             const cb = parseFloat(cbStr);
             const eq = Math.max(0, mv - cb);
             const pct = mv > 0 ? (eq / mv) * 100 : 0;
-            const vEl = document.getElementById('stat-equity-value');
-            const pEl = document.getElementById('stat-equity-pct');
-            if(vEl) vEl.innerText = formatRD(eq);
-            if(pEl) pEl.innerText = `${pct.toFixed(2)}%`;
+            if(document.getElementById('stat-equity-value')) document.getElementById('stat-equity-value').innerText = formatRD(eq);
+            if(document.getElementById('stat-equity-pct')) document.getElementById('stat-equity-pct').innerText = `${pct.toFixed(2)}%`;
             const dataV = amortizationData.filter(x => x.visible);
             if(dataV.length > 0 && document.getElementById('chart-equity')) {
                 Plotly.newPlot('chart-equity', [
-                    { x: dataV.map(x => x.mes), y: dataV.map(() => mv), name: 'Valor Terreno', type: 'scatter', mode: 'lines', line: { dash: 'dot', color: '#10b981' } },
+                    { x: dataV.map(x => x.mes), y: dataV.map(() => mv), name: 'Valor Mercado', type: 'scatter', mode: 'lines', line: { dash: 'dot', color: '#10b981' } },
                     { x: dataV.map(x => x.mes), y: dataV.map(x => x.saldo), name: 'Deuda', fill: 'tonexty', type: 'scatter', mode: 'lines', line: { color: '#ef4444' } }
-                ], { margin: { t: 40, b: 40, l: 60, r: 20 } });
+                ], { title: 'Patrimonio Real', margin: { t: 40, b: 40, l: 60, r: 20 } });
             }
         }
 
         async function uploadToCloud() {
-            if(amortizationData.length === 0) return alert("Primero genera datos.");
+            if(amortizationData.length === 0) return alert("Genera datos primero.");
             try {
-                const s = { m: document.getElementById('input-monto').value, t: document.getElementById('input-tasa').value, c: document.getElementById('input-cuota').value, seg: document.getElementById('input-seguro').value, f: document.getElementById('input-fecha').value, mv: document.getElementById('input-market-value').value };
+                const s = { m: document.getElementById('input-monto').value, t: document.getElementById('input-tasa').value, c: document.getElementById('input-cuota').value, seg: document.getElementById('input-seguro').value, f: document.getElementById('input-fecha').value };
                 const code = await window.cloudSync.save(amortizationData, s);
                 document.getElementById('sync-code-display').innerText = code;
                 document.getElementById('sync-code-box').classList.remove('hidden');
                 alert(`¡Guardado! Código: ${code}`);
-            } catch(e) { 
-                if (e.message === "CONFIG_MISSING") {
-                    alert("Esta función requiere la configuración de base de datos activa del entorno. Asegúrate de estar usándola en la plataforma original o configurar tu propio Firebase.");
-                } else {
-                    alert("Error al sincronizar. Revisa tu conexión."); 
-                }
-            }
+            } catch(e) { alert("Error al sincronizar."); }
         }
 
         async function downloadFromCloud() {
@@ -560,57 +547,48 @@
             if(!code) return alert("Ingresa código.");
             try {
                 const res = await window.cloudSync.load(code);
-                if(!res) return alert("Código no encontrado.");
+                if(!res) return alert("No encontrado.");
                 const { data, settings } = res;
                 document.getElementById('input-monto').value = settings.m;
                 document.getElementById('input-tasa').value = settings.t;
                 document.getElementById('input-cuota').value = settings.c;
                 document.getElementById('input-seguro').value = settings.seg;
                 document.getElementById('input-fecha').value = settings.f;
-                document.getElementById('input-market-value').value = settings.mv || 1200000;
                 amortizationData = data; recalculateSchedule(); showSections(); alert("¡Cargado!");
-            } catch(e) { 
-                if (e.message === "CONFIG_MISSING") {
-                    alert("Esta función requiere la configuración de base de datos activa del entorno.");
-                } else {
-                    alert("Error al descargar."); 
-                }
-            }
+            } catch(e) { alert("Error al descargar."); }
         }
 
         function updateCharts() {
             const v = amortizationData.filter(x => x.visible);
             if(v.length === 0) return;
-            Plotly.newPlot('chart-balance', [{ x: v.map(x => x.mes), y: v.map(x => x.saldo), type: 'scatter', mode: 'lines', line: { color: '#1e293b', width: 4 }, fill: 'tozeroy' }], { margin: { t: 40, b: 40, l: 60, r: 20 } });
-            Plotly.newPlot('chart-distribution', [{ x: v.map(x => x.mes), y: v.map(x => x.capital + x.abono), name: 'Capital', type: 'bar', marker: { color: '#10b981' } }, { x: v.map(x => x.mes), y: v.map(x => x.interes), name: 'Interés', type: 'bar', marker: { color: '#ef4444' } }], { barmode: 'stack', margin: { t: 40, b: 40, l: 60, r: 20 } });
+            Plotly.newPlot('chart-balance', [{ x: v.map(x => x.mes), y: v.map(x => x.saldo), type: 'scatter', mode: 'lines', line: { color: '#1e293b', width: 4 }, fill: 'tozeroy' }], { title: 'Saldo Pendiente', margin: { t: 40, b: 40, l: 60, r: 20 } });
+            Plotly.newPlot('chart-distribution', [{ x: v.map(x => x.mes), y: v.map(x => x.capital + x.abono), name: 'Cap', type: 'bar', marker: { color: '#10b981' } }, { x: v.map(x => x.mes), y: v.map(x => x.interes), name: 'Int', type: 'bar', marker: { color: '#ef4444' } }], { barmode: 'stack', margin: { t: 40, b: 40, l: 60, r: 20 } });
             let r = 0; Plotly.newPlot('chart-savings', [{ x: v.map(x => x.mes), y: v.map(x => { r += 200; return r; }), fill: 'tozeroy', type: 'scatter', mode: 'lines', line: { color: '#f59e0b' } }], { title: 'Ahorro Acumulado', margin: { t: 40, b: 40, l: 60, r: 20 } });
         }
 
         function renderTable() {
             const b = document.getElementById('tableBody'); b.innerHTML = '';
             const maxI = Math.max(...amortizationData.map(x => x.interes), 1);
-            
             amortizationData.forEach((row, idx) => {
                 if(!row.visible) return;
                 const tr = document.createElement('tr');
-                tr.className = `border-b border-slate-100 transition-colors ${row.estatus === 'P' ? 'row-paid' : 'hover:bg-slate-50'}`;
-                const heat = `rgba(239, 68, 68, ${(row.interes/maxI)*0.1})`;
+                tr.className = `border-b border-slate-100 transition-colors ${row.estatus === 'P' ? 'row-paid' : ''}`;
                 tr.innerHTML = `
                     <td class="p-4 text-center font-bold border-r">${row.mes}</td>
                     <td class="p-4 text-slate-400 border-r text-xs">${row.fecha}</td>
                     <td class="p-4 text-right border-r font-medium text-slate-500">${formatRD(CONFIG.cuotaFija)}</td>
-                    <td class="p-4 text-right border-r font-medium text-rose-600" style="background-color: ${heat}">${formatRD(row.interes)}</td>
+                    <td class="p-4 text-right border-r font-medium text-rose-600" style="background-color: rgba(239, 68, 68, ${(row.interes/maxI)*0.1})">${formatRD(row.interes)}</td>
                     <td class="p-4 text-right border-r font-medium text-emerald-700">${formatRD(row.capital)}</td>
                     <td class="p-4 text-center border-r">
-                        <input id="edit-seguro-${idx}" type="number" step="0.01" value="${row.seguro.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'seguro')" onchange="updateField(${idx}, 'seguro', this.value)" class="editable-input" style="max-width: 80px;">
+                        <input id="edit-seguro-${idx}" type="number" step="0.01" value="${row.seguro.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'seguro')" onchange="updateField(${idx}, 'seguro', this.value)" class="editable-input">
                     </td>
-                    <td class="p-4 text-center border-r bg-blue-50/50">
-                        <input id="edit-abono-${idx}" type="number" value="${row.abono.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'abono')" onchange="updateField(${idx}, 'abono', this.value)" class="editable-input text-blue-800" style="max-width: 100px;">
+                    <td class="p-4 text-center border-r bg-blue-50/20">
+                        <input id="edit-abono-${idx}" type="number" value="${row.abono.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'abono')" onchange="updateField(${idx}, 'abono', this.value)" class="editable-input text-blue-800">
                     </td>
                     <td class="p-4 text-right font-black border-r">${formatRD(CONFIG.cuotaFija + row.abono)}</td>
                     <td class="p-4 text-right font-black text-slate-900 border-r">${formatRD(row.saldo)}</td>
                     <td class="p-4 text-center">
-                        <input id="edit-estatus-${idx}" type="text" maxlength="1" value="${row.estatus}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'estatus')" onchange="updateField(${idx}, 'estatus', this.value)" class="editable-input uppercase font-bold" style="max-width: 60px;">
+                        <input id="edit-estatus-${idx}" type="text" maxlength="1" value="${row.estatus}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'estatus')" onchange="updateField(${idx}, 'estatus', this.value)" class="editable-input font-bold uppercase">
                     </td>
                 `;
                 b.appendChild(tr);
@@ -652,7 +630,7 @@
             const ex = parseFloat(document.getElementById('sim-extra-range').value);
             if(ex <= 0) return;
             amortizationData.forEach(r => { if(r.estatus !== 'P') r.abono = ex; });
-            recalculateSchedule(); alert("Aplicado.");
+            recalculateSchedule(); alert("Simulación aplicada.");
         }
 
         function exportToCalendar() {
@@ -667,24 +645,19 @@
             downloadFile(ics, "pagos.ics", "text/calendar");
         }
 
-        async function exportData(format) {
+        function exportData(format) {
             if (amortizationData.length === 0) return;
             const dataV = amortizationData.filter(d => d.visible);
-            const now = new Date();
-            const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+            const ts = new Date().toISOString().replace(/T/, '_').replace(/\..+/, '').replace(/-/g, '').replace(/:/g, '').substring(0, 13);
             const fileName = `AmortizaApp_${ts}.${format}`;
-            const rows = dataV.map(r => ({ "Mes": r.mes, "Fecha Pago": r.fecha, "Pago Regular": CONFIG.cuotaFija.toFixed(2), "Interés": r.interes.toFixed(2), "Capital": r.capital.toFixed(2), "Seguro": r.seguro.toFixed(2), "Abono Extra": r.abono.toFixed(2), "Cuota Total": (CONFIG.cuotaFija + r.abono).toFixed(2), "Saldo": r.saldo.toFixed(2), "Estatus": r.estatus }));
-            if (format === 'json') downloadFile(JSON.stringify(rows, null, 2), fileName, 'application/json');
-            if (format === 'xlsx') { const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Amortizacion"); XLSX.writeFile(wb, fileName); }
+            const exportRows = dataV.map(r => ({ "Mes": r.mes, "Fecha Pago": r.fecha, "Pago Regular": CONFIG.cuotaFija, "Interés": r.interes.toFixed(2), "Capital": r.capital.toFixed(2), "Seguro": r.seguro.toFixed(2), "Abono Extra": r.abono.toFixed(2), "Cuota Total": (CONFIG.cuotaFija + r.abono).toFixed(2), "Saldo": r.saldo.toFixed(2), "Estatus": r.estatus }));
+
+            if (format === 'json') downloadFile(JSON.stringify(exportRows, null, 2), fileName, 'application/json');
+            if (format === 'xlsx') { const ws = XLSX.utils.json_to_sheet(exportRows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Amortizacion"); XLSX.writeFile(wb, fileName); }
             if (format === 'pdf') {
                 const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
-                doc.setFontSize(18); doc.text("Reporte Detallado AmortizaApp", 14, 15);
-                doc.setFontSize(10); doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 22);
-                doc.setFontSize(12); doc.text("Resumen del Préstamo:", 14, 32);
-                const sData = [ ["Saldo Actual", document.getElementById('stat-balance').innerText], ["Total Interés", document.getElementById('stat-interest').innerText], ["Ahorro Real", document.getElementById('stat-savings').innerText], ["Ahorro Tiempo", document.getElementById('stat-months').innerText] ];
-                doc.autoTable({ startY: 35, head: [["Concepto", "Valor"]], body: sData, theme: 'grid', styles: { fontSize: 9 } });
-                try { const img = await Plotly.toImage('chart-balance', { format: 'png', width: 800, height: 400 }); doc.addImage(img, 'PNG', 14, doc.lastAutoTable.finalY + 10, 180, 70); } catch(e) {}
-                doc.autoTable({ startY: doc.lastAutoTable.finalY + 85, head: [["Mes", "Fecha", "Int", "Cap", "Seg", "Abo", "Saldo", "Est"]], body: dataV.map(r => [r.mes, r.fecha, r.interes.toFixed(2), r.capital.toFixed(2), r.seguro.toFixed(2), r.abono.toFixed(2), r.saldo.toFixed(2), r.estatus]), styles: { fontSize: 6 } });
+                doc.setFontSize(16); doc.text("Reporte AmortizaApp", 14, 15);
+                doc.autoTable({ startY: 25, head: [["Mes", "Fecha", "Int", "Cap", "Seg", "Abo", "Saldo", "Est"]], body: dataV.map(r => [r.mes, r.fecha, r.interes.toFixed(2), r.capital.toFixed(2), r.seguro.toFixed(2), r.abono.toFixed(2), r.saldo.toFixed(2), r.estatus]), styles: { fontSize: 7 } });
                 doc.save(fileName);
             }
         }
