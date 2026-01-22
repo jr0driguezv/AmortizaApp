@@ -86,7 +86,6 @@
             }
         };
 
-        // Inicializar al cargar
         window.addEventListener('load', initializeFirebase);
     </script>
     
@@ -119,7 +118,10 @@
         }
 
         @media (max-width: 640px) {
-            input { font-size: 16px !important; }
+            /* 2. Corrección de tamaño de fuente en móvil para celdas editables */
+            input:not(.editable-input) { font-size: 16px !important; }
+            .table-mobile-container .editable-input { font-size: 10px !important; }
+            
             .table-mobile-container td, .table-mobile-container th { padding: 0.6rem 0.2rem !important; font-size: 10px; }
             .widget-text-size { font-size: 1.25rem !important; }
         }
@@ -141,7 +143,7 @@
 
     <!-- Modal Config Firebase -->
     <div id="config-modal" class="fixed inset-0 bg-black/60 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative animate-in zoom-in duration-300">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
             <h3 class="text-lg font-black text-slate-800 mb-2">Configurar Nube Personal</h3>
             <p class="text-xs text-slate-500 mb-4 leading-relaxed text-balance">Pega los datos que te dio Firebase Console. El sistema corregirá automáticamente el formato si pegas el código tal cual lo entrega la consola.</p>
             <textarea id="firebase-config-input" class="w-full h-48 p-4 text-[10px] font-mono bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder='Pega tu configuración aquí...'></textarea>
@@ -152,7 +154,6 @@
         </div>
     </div>
 
-    <!-- Botón Ir Arriba -->
     <button id="btn-top" onclick="scrollToTop()" class="bg-blue-800 text-white p-4 rounded-full shadow-2xl hover:bg-black transition-all transform active:scale-90 shadow-blue-900/20">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
     </button>
@@ -211,7 +212,6 @@
                         </div>
                     </div>
 
-                    <!-- Instrucciones integradas -->
                     <div class="bg-indigo-800/40 border border-indigo-700 rounded-xl p-4 mt-6 text-left">
                         <h3 class="font-bold text-indigo-200 mb-2 text-xs">📋 Instrucciones de Configuración Firebase:</h3>
                         <ol class="list-decimal list-inside space-y-1 text-[10px] text-indigo-300">
@@ -253,7 +253,7 @@
 
         <!-- PANEL SIMULADOR -->
         <div id="simulator-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700">
-            <div onclick="toggleSection('simulator-content', 'simulator-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer">
+            <div onclick="toggleSection('simulator-content', 'simulator-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
                 <div class="flex items-center gap-2 text-slate-700 text-balance">
                     <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Simulador de Impacto Inmediato</h2>
@@ -262,7 +262,7 @@
                 <svg id="simulator-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
             <div id="simulator-content" class="collapse-content">
-                <div class="p-6 pt-0 space-y-6 text-center sm:text-left text-balance text-slate-700">
+                <div class="p-6 pt-0 space-y-6 text-center sm:text-left text-balance text-slate-700 text-slate-700">
                     <div class="bg-orange-50 p-6 rounded-2xl border border-orange-100">
                         <label class="block text-xs font-black text-orange-800 mb-4 uppercase tracking-widest text-center sm:text-left">¿Qué pasaría si aumento mi abono mensual en...?</label>
                         <div class="flex flex-col sm:flex-row items-center gap-4">
@@ -270,8 +270,8 @@
                             <span id="sim-extra-value" class="text-2xl font-black text-orange-600 whitespace-nowrap">RD$ 0</span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-center sm:text-left text-slate-700"><p class="text-[10px] text-orange-400 font-bold uppercase text-balance">Ahorro Extra</p><p id="sim-money-saved" class="text-xl font-black text-orange-700">RD$ 0.00</p></div>
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-center sm:text-left text-slate-700"><p class="text-[10px] text-orange-400 font-bold uppercase text-balance">Meses Menos</p><p id="sim-months-saved" class="text-xl font-black text-orange-700">0 meses</p></div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-center sm:text-left text-slate-700"><p class="text-[10px] text-orange-400 font-bold uppercase text-balance text-slate-700">Ahorro Extra</p><p id="sim-money-saved" class="text-xl font-black text-orange-700">RD$ 0.00</p></div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-center sm:text-left text-slate-700"><p class="text-[10px] text-orange-400 font-bold uppercase text-balance text-slate-700">Meses Menos</p><p id="sim-months-saved" class="text-xl font-black text-orange-700">0 meses</p></div>
                         </div>
                         <button onclick="applySimulation()" class="mt-4 w-full py-3 bg-orange-600 text-white font-black rounded-xl active:scale-95 transition-all text-xs">APLICAR ABONO A MESES FALTANTES</button>
                     </div>
@@ -280,7 +280,7 @@
         </div>
 
         <!-- PANEL PATRIMONIO -->
-        <div id="equity-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance">
+        <div id="equity-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance text-slate-700 text-balance">
             <div onclick="toggleSection('equity-content', 'equity-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
@@ -291,8 +291,8 @@
             </div>
             <div id="equity-content" class="collapse-content">
                 <div class="p-6 pt-0 space-y-6 text-center sm:text-left text-balance text-slate-700">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center sm:text-left text-balance text-slate-700 text-slate-700">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center sm:text-left text-slate-700 text-balance"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest text-center sm:text-left text-balance">Valor Mercado (RD$)</label><input id="input-market-value" type="number" value="1200000" onchange="calculateEquity()" class="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold text-lg text-center sm:text-left text-slate-700"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center sm:text-left text-balance text-slate-700 text-slate-700 text-slate-700">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center sm:text-left text-slate-700"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest text-center sm:text-left text-balance text-slate-700">Valor Mercado (RD$)</label><input id="input-market-value" type="number" value="1200000" onchange="calculateEquity()" class="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold text-lg text-center sm:text-left text-slate-700"></div>
                         <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center text-emerald-700 text-balance"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500 text-balance">Patrimonio Real</p><p id="stat-equity-value" class="text-2xl font-black">RD$ 0.00</p></div>
                         <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center text-emerald-700 text-balance"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500 text-balance">% Propiedad Real</p><p id="stat-equity-pct" class="text-2xl font-black">0.00%</p></div>
                     </div>
@@ -302,20 +302,20 @@
         </div>
 
         <!-- PANEL COSTO TIEMPO -->
-        <div id="cost-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance">
+        <div id="cost-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance text-slate-700 text-balance text-slate-700 text-balance">
             <div onclick="toggleSection('cost-content', 'cost-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700 text-balance">
                 <div class="flex items-center gap-2 text-slate-700">
                     <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <h2 class="text-base sm:text-lg font-bold text-slate-700">Análisis de Costo de Oportunidad</h2>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-700 text-balance">Análisis de Costo de Oportunidad</h2>
                     <svg onclick="event.stopPropagation(); showInfo('Costo Tiempo', 'Muestra cuánto pierdes en intereses por cada unidad de tiempo.')" class="w-5 h-5 info-btn text-slate-700 text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
                 <svg id="cost-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
             <div id="cost-content" class="collapse-content">
-                <div class="p-6 pt-0">
+                <div class="p-6 pt-0 text-slate-700">
                     <div class="bg-rose-50 p-6 rounded-3xl border border-rose-100 text-center">
                         <p class="text-xs font-black text-rose-800 uppercase tracking-widest mb-4 text-balance">Intereses pagados actualmente por cada unidad de tiempo:</p>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-slate-700">
                             <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left text-slate-700"><p class="text-[10px] text-rose-400 font-bold uppercase text-balance">Mes</p><p id="cost-monthly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
                             <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left text-slate-700"><p class="text-[10px] text-rose-400 font-bold uppercase text-balance">Día</p><p id="cost-daily" class="text-lg font-black text-rose-700">RD$ 0</p></div>
                             <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left text-slate-700"><p class="text-[10px] text-rose-400 font-bold uppercase text-balance">Hora</p><p id="cost-hourly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
@@ -327,8 +327,8 @@
         </div>
 
         <!-- PANEL 2: Resumen Estratégico -->
-        <div id="summary-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700">
-            <div onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
+        <div id="summary-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance text-slate-700">
+            <div onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700 text-balance">
                 <div class="flex items-center gap-2 text-balance text-slate-700">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 2v-6m-8 13h11a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v11a2 2 0 002 2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold text-slate-700 text-balance">Resumen Estratégico</h2>
@@ -346,9 +346,9 @@
                             <p id="stat-interest-pct" class="text-[10px] text-blue-400 mt-1">0% del costo</p>
                         </div>
                         <div class="bg-blue-900 p-5 sm:p-6 rounded-2xl shadow-xl border border-blue-800 text-white border-l-4 border-l-blue-400 text-balance text-center sm:text-left">
-                            <p class="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1 text-balance text-balance">Ahorro Real Logrado</p>
-                            <p id="stat-savings" class="text-xl sm:text-2xl font-black">RD$ 0.00</p>
-                            <p id="stat-months" class="text-[9px] font-bold bg-blue-800 px-2 py-1 rounded-lg mt-2 inline-block">Ahorras 0 meses</p>
+                            <p class="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1 text-balance text-balance text-white">Ahorro Real Logrado</p>
+                            <p id="stat-savings" class="text-xl sm:text-2xl font-black text-white">RD$ 0.00</p>
+                            <p id="stat-months" class="text-[9px] font-bold bg-blue-800 px-2 py-1 rounded-lg mt-2 inline-block text-white">Ahorras 0 meses</p>
                         </div>
                         <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 border-l-4 border-l-orange-500 text-orange-700 text-center sm:text-left text-balance text-slate-700"><p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1 text-balance text-balance">Abonos Realizados</p><p id="stat-abonos" class="text-xl sm:text-2xl font-black text-orange-700 widget-text-size">RD$ 0.00</p></div>
                     </div>
@@ -364,19 +364,19 @@
         </div>
 
         <!-- PANEL GRÁFICOS -->
-        <div id="charts-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance text-slate-700">
+        <div id="charts-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance text-slate-700 text-balance text-slate-700 text-balance text-slate-700">
             <div onclick="toggleSection('charts-content', 'charts-arrow', true)" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
-                <div class="flex items-center gap-2 text-slate-700 text-balance">
+                <div class="flex items-center gap-2 text-slate-700 text-balance text-slate-700">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold text-slate-700 text-balance">Análisis Visual (Gráficos)</h2>
-                    <svg onclick="event.stopPropagation(); showInfo('Gráficas', 'Representación visual de tu deuda y ahorro acumulado.')" class="w-5 h-5 info-btn text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <svg onclick="event.stopPropagation(); showInfo('Gráficas', 'Representación visual de tu deuda y ahorro acumulado.')" class="w-5 h-5 info-btn text-slate-700 text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
                 <svg id="charts-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
             <div id="charts-content" class="collapse-content">
-                <div class="p-6 pt-0 space-y-8 text-center sm:text-left text-slate-700 text-slate-700 text-balance text-slate-700">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-slate-700 text-balance text-slate-700"><div id="chart-balance" class="w-full h-80 text-slate-700"></div><div id="chart-distribution" class="w-full h-80 text-slate-700"></div></div>
-                    <div id="chart-savings" class="w-full h-80 border-t pt-8 border-slate-100 text-slate-700 text-balance text-slate-700"></div>
+                <div class="p-6 pt-0 space-y-8 text-center sm:text-left text-slate-700 text-slate-700 text-balance text-slate-700 text-slate-700">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-slate-700 text-balance text-slate-700 text-slate-700"><div id="chart-balance" class="w-full h-80 text-slate-700"></div><div id="chart-distribution" class="w-full h-80 text-slate-700"></div></div>
+                    <div id="chart-savings" class="w-full h-80 border-t pt-8 border-slate-100 text-slate-700 text-balance text-slate-700 text-slate-700"></div>
                 </div>
             </div>
         </div>
@@ -384,13 +384,13 @@
         <!-- PANEL TABLA -->
         <div id="table-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
             <div class="w-full flex flex-col lg:flex-row justify-between items-center p-5 sm:p-6 bg-slate-50 border-b border-slate-200 gap-4">
-                <div class="flex items-center gap-2 text-slate-700 flex-grow cursor-pointer text-balance text-slate-700" onclick="toggleSection('table-content-area', 'table-arrow')">
+                <div class="flex items-center gap-2 text-slate-700 flex-grow cursor-pointer text-balance text-slate-700 text-slate-700" onclick="toggleSection('table-content-area', 'table-arrow')">
                     <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold text-slate-700 text-balance text-slate-700">Detalle de Amortización Dinámica</h2>
-                    <svg onclick="event.stopPropagation(); showInfo('Tabla', 'Lleva el control real de tus pagos.')" class="w-5 h-5 info-btn text-slate-700 text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <svg onclick="event.stopPropagation(); showInfo('Tabla', 'Lleva el control real de tus pagos.')" class="w-5 h-5 info-btn text-slate-700 text-slate-700 text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
-                <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-hide text-slate-700 text-slate-700 text-slate-700 text-slate-700 text-slate-700">
-                    <span class="text-[10px] text-slate-400 font-black uppercase mr-2 text-slate-700 text-slate-700">Exportar:</span>
+                <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-hide text-slate-700 text-slate-700 text-slate-700 text-slate-700 text-slate-700 text-slate-700">
+                    <span class="text-[10px] text-slate-400 font-black uppercase mr-2 text-slate-700 text-slate-700 text-slate-700">Exportar:</span>
                     <button onclick="event.stopPropagation(); exportData('xlsx')" class="export-btn bg-emerald-50 border-emerald-200 text-emerald-700 whitespace-nowrap shadow-sm transition-all active:scale-95">XLSX</button>
                     <button onclick="event.stopPropagation(); exportData('pdf')" class="export-btn bg-rose-50 border-rose-200 text-rose-700 whitespace-nowrap shadow-sm transition-all active:scale-95">PDF</button>
                     <button onclick="event.stopPropagation(); exportData('json')" class="export-btn bg-white border-slate-300 text-slate-700 whitespace-nowrap shadow-sm transition-all active:scale-95">JSON</button>
@@ -398,8 +398,8 @@
                 </div>
             </div>
             <div id="table-content-area" class="collapse-content">
-                <div class="overflow-x-auto overflow-y-auto max-h-[500px] sm:max-h-[600px] border-t border-slate-100 text-slate-700 text-balance text-slate-700">
-                    <table class="w-full text-left border-collapse table-mobile-container text-slate-700 text-slate-700 text-slate-700 text-slate-700" id="amortizationTable">
+                <div class="overflow-x-auto overflow-y-auto max-h-[500px] sm:max-h-[600px] border-t border-slate-100 text-slate-700 text-balance text-slate-700 text-slate-700">
+                    <table class="w-full text-left border-collapse table-mobile-container" id="amortizationTable">
                         <thead class="sticky top-0 bg-slate-800 text-white text-[9px] sm:text-[10px] uppercase font-bold z-20">
                             <tr class="sticky-header">
                                 <th class="p-4 border-r border-slate-700 text-center">Mes</th>
@@ -410,8 +410,8 @@
                                 <th class="p-4 border-r border-slate-700 text-center bg-slate-700 text-balance text-balance" id="header-seguro">Seguro</th>
                                 <th class="p-4 border-r border-slate-700 text-center bg-blue-900 text-balance text-balance" id="header-abono">Abono Extra</th>
                                 <th class="p-4 border-r border-slate-700 text-right font-black text-balance text-balance">Cuota Total</th>
-                                <th class="p-4 border-r border-slate-700 text-right font-black text-slate-200 text-balance">Saldo</th>
-                                <th class="p-4 text-center bg-slate-700 text-balance text-balance">Estatus</th>
+                                <th class="p-4 border-r border-slate-700 text-right font-black text-balance">Saldo</th>
+                                <th class="p-4 text-center bg-slate-700 text-balance text-balance" style="width: 1%;">Estatus</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="text-xs sm:text-sm text-slate-600"></tbody>
@@ -446,7 +446,6 @@
         function saveFirebaseConfig() {
             const input = document.getElementById('firebase-config-input').value.trim();
             try {
-                // LIMPIADOR INTELIGENTE FIREBASE
                 let jsonStr = input;
                 if (input.includes('apiKey:') || !input.includes('"apiKey"')) {
                     jsonStr = input.replace(/^(const|let|var)\s+\w+\s*=\s*/, '');
@@ -762,17 +761,23 @@
         function formatDate(d) { return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
         
         function showSections() { 
-            // 2. Solo expandir Resumen y Tabla automáticamente
+            // 2. Control de expansión automática: Solo Resumen y Tabla
             const ids = ['summary-panel', 'table-wrapper', 'simulator-panel', 'equity-panel', 'cost-panel', 'charts-wrapper'];
             ids.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.classList.remove('hidden');
             });
             
-            // Abrir solo los 2 indicados
+            // Abrir solo las 2 secciones indicadas
             const toOpen = ['summary-content', 'table-content-area'];
             const arrows = ['summary-arrow', 'table-arrow'];
             
+            // Asegurar que Gráficos esté CERRADO
+            const chartSection = document.getElementById('charts-content');
+            if(chartSection) chartSection.classList.remove('open');
+            const chartArrow = document.getElementById('charts-arrow');
+            if(chartArrow) chartArrow.classList.remove('rotate-180');
+
             toOpen.forEach((id, idx) => {
                 const content = document.getElementById(id);
                 if(content && !content.classList.contains('open')) {
