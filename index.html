@@ -20,68 +20,74 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    <!-- Firebase para Sincronización -->
+    <!-- Firebase para Sincronización (Realtime Database) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Función segura para obtener la configuración
-        const getFirebaseConfig = () => {
+        let database = null;
+
+        function initializeFirebase() {
             try {
                 const saved = localStorage.getItem('amortiza_firebase_config');
-                if (saved) return JSON.parse(saved);
-                return typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-            } catch (e) { 
-                console.error("Error al leer configuración guardada");
-                return null; 
-            }
-        };
-
-        const config = getFirebaseConfig();
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'amortiza-app-v1';
-        let db = null; let auth = null;
-        
-        if (config && config.apiKey) {
-            try {
+                if (!saved) {
+                    updateCloudStatus('⚠️ Firebase no configurado. Haz clic en ⚙️');
+                    return false;
+                }
+                
+                const config = JSON.parse(saved);
+                
+                if (!config.databaseURL) {
+                    updateCloudStatus('❌ Falta databaseURL. Usa Realtime Database');
+                    return false;
+                }
+                
                 const app = initializeApp(config);
-                db = getFirestore(app);
-                auth = getAuth(app);
-            } catch (e) { console.error("Firebase Init Error", e); }
+                database = getDatabase(app);
+                updateCloudStatus('✅ Conectado a Firebase');
+                return true;
+            } catch (e) {
+                console.error("Firebase init error:", e);
+                updateCloudStatus('❌ Error de configuración');
+                return false;
+            }
+        }
+
+        function updateCloudStatus(msg) {
+            const el = document.getElementById('cloud-status');
+            if (el) el.innerText = msg;
+        }
+
+        function generateCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
         }
 
         window.cloudSync = {
-            isConfigured: () => !!(db && auth),
             save: async (data, settings) => {
-                if (!auth || !db) throw new Error("CONFIG_MISSING");
-                // Asegurar autenticación antes de guardar
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else { await signInAnonymously(auth); }
-                
-                const user = auth.currentUser;
-                if (!user) throw new Error("AUTH_FAILED");
-
-                const syncCode = user.uid.substring(0, 6).toUpperCase();
-                // Ruta estricta de Firebase según reglas del entorno
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sync', syncCode);
-                
-                await setDoc(docRef, {
-                    payload: JSON.stringify({ data, settings }),
-                    timestamp: new Date().toISOString(),
-                    userId: user.uid
+                if (!database && !initializeFirebase()) {
+                    throw new Error("CONFIG_MISSING");
+                }
+                const code = generateCode();
+                const dbRef = ref(database, `amortiza/${code}`);
+                await set(dbRef, {
+                    data: data,
+                    settings: settings,
+                    timestamp: Date.now()
                 });
-                return syncCode;
+                return code;
             },
             load: async (code) => {
-                if (!auth || !db) throw new Error("CONFIG_MISSING");
-                if (!auth.currentUser) await signInAnonymously(auth);
-                
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sync', code.toUpperCase());
-                const snap = await getDoc(docRef);
-                return snap.exists() ? JSON.parse(snap.data().payload) : null;
+                if (!database && !initializeFirebase()) {
+                    throw new Error("CONFIG_MISSING");
+                }
+                const dbRef = ref(database);
+                const snapshot = await get(child(dbRef, `amortiza/${code.toUpperCase()}`));
+                return snapshot.exists() ? snapshot.val() : null;
             }
         };
+
+        // Inicializar al cargar
+        window.addEventListener('load', initializeFirebase);
     </script>
     
     <style>
@@ -98,7 +104,6 @@
         .collapse-content.open { max-height: 25000px; transition: max-height 0.5s ease-in; }
         .info-btn { @apply text-slate-300 hover:text-blue-500 cursor-pointer transition-colors p-1 rounded-full hover:bg-slate-100; }
         
-        /* Celdas editables ultra-planas */
         .editable-input {
             @apply bg-transparent border-none p-0 text-center outline-none ring-0 focus:ring-0 transition-all font-medium;
             font-size: inherit; color: inherit; width: 100%; min-width: 80px; display: block;
@@ -107,7 +112,6 @@
             box-shadow: none !important;
         }
 
-        /* Fuerza la transparencia incluso en las filas con fondo verde (Pagado) */
         .row-paid .editable-input {
             background-color: transparent !important;
             border: none !important;
@@ -139,7 +143,7 @@
     <div id="config-modal" class="fixed inset-0 bg-black/60 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative animate-in zoom-in duration-300">
             <h3 class="text-lg font-black text-slate-800 mb-2">Configurar Nube Personal</h3>
-            <p class="text-xs text-slate-500 mb-4 leading-relaxed text-balance">Pega el código que te dio Firebase Console (ej: <code>const firebaseConfig = { ... }</code>). El sistema lo corregirá automáticamente.</p>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed text-balance">Pega los datos que te dio Firebase Console. El sistema corregirá automáticamente el formato si pegas el código tal cual lo entrega la consola.</p>
             <textarea id="firebase-config-input" class="w-full h-48 p-4 text-[10px] font-mono bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder='Pega tu configuración aquí...'></textarea>
             <div class="flex gap-2 mt-4">
                 <button onclick="saveFirebaseConfig()" class="flex-grow py-3 bg-indigo-600 text-white font-bold rounded-xl active:scale-95 transition-all text-xs">Guardar y Recargar</button>
@@ -157,7 +161,7 @@
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 border-b border-slate-200 pb-6">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight text-balance text-slate-700">AmortizaApp - Gestión Hipotecaria!</h1>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight text-balance text-slate-700">AmortizaApp - Gestión Hipotecaria</h1>
                 <p class="text-slate-500 text-sm">Visualiza tu ahorro real y optimiza tu patrimonio en tiempo real</p>
             </div>
             
@@ -187,6 +191,8 @@
             </div>
             <div id="cloud-content" class="collapse-content">
                 <div class="p-6 pt-0 space-y-4 text-center sm:text-left text-balance text-white">
+                    <div id="cloud-status" class="text-xs text-indigo-200 mb-2 font-medium"></div>
+                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="bg-indigo-800/50 p-4 rounded-2xl border border-indigo-700 text-center">
                             <p class="text-[10px] font-bold text-indigo-200 mb-3 uppercase tracking-widest text-balance">Subir a la nube</p>
@@ -203,6 +209,19 @@
                                 <button onclick="downloadFromCloud()" class="px-6 py-3 bg-indigo-500 text-white font-bold rounded-xl active:scale-95 text-sm">CARGAR</button>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Instrucciones integradas -->
+                    <div class="bg-indigo-800/40 border border-indigo-700 rounded-xl p-4 mt-6 text-left">
+                        <h3 class="font-bold text-indigo-200 mb-2 text-xs">📋 Instrucciones de Configuración Firebase:</h3>
+                        <ol class="list-decimal list-inside space-y-1 text-[10px] text-indigo-300">
+                            <li>Ve a <a href="https://console.firebase.google.com" target="_blank" class="underline text-white">Firebase Console</a></li>
+                            <li>Entra en <strong>Realtime Database</strong></li>
+                            <li>Crea la base de datos y en "Reglas" pon:
+                                <code class="block bg-indigo-950 p-2 rounded mt-1 text-white">{"rules": {"amortiza": {".read": true, ".write": true}}}</code>
+                            </li>
+                            <li>Copia el <code>firebaseConfig</code> y pégalo en el modal de configuración (⚙️)</li>
+                        </ol>
                     </div>
                 </div>
             </div>
@@ -234,8 +253,8 @@
 
         <!-- PANEL SIMULADOR -->
         <div id="simulator-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700">
-            <div onclick="toggleSection('simulator-content', 'simulator-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
-                <div class="flex items-center gap-2 text-slate-700">
+            <div onclick="toggleSection('simulator-content', 'simulator-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer">
+                <div class="flex items-center gap-2 text-slate-700 text-balance">
                     <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold">Simulador de Impacto Inmediato</h2>
                     <svg onclick="event.stopPropagation(); showInfo('Simulador', 'Prueba cómo cambiaría tu ahorro si aumentaras tu abono mensual fijo.')" class="w-5 h-5 info-btn text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
@@ -273,7 +292,7 @@
             <div id="equity-content" class="collapse-content">
                 <div class="p-6 pt-0 space-y-6 text-center sm:text-left text-balance text-slate-700">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center sm:text-left text-balance text-slate-700 text-slate-700">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center sm:text-left text-slate-700"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest text-center sm:text-left text-balance">Valor Mercado (RD$)</label><input id="input-market-value" type="number" value="1200000" onchange="calculateEquity()" class="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold text-lg text-center sm:text-left text-slate-700"></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center sm:text-left text-slate-700 text-balance"><label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest text-center sm:text-left text-balance">Valor Mercado (RD$)</label><input id="input-market-value" type="number" value="1200000" onchange="calculateEquity()" class="w-full p-3 border border-slate-200 rounded-xl outline-none font-bold text-lg text-center sm:text-left text-slate-700"></div>
                         <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center text-emerald-700 text-balance"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500 text-balance">Patrimonio Real</p><p id="stat-equity-value" class="text-2xl font-black">RD$ 0.00</p></div>
                         <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center text-emerald-700 text-balance"><p class="text-[10px] font-black uppercase tracking-widest text-emerald-500 text-balance">% Propiedad Real</p><p id="stat-equity-pct" class="text-2xl font-black">0.00%</p></div>
                     </div>
@@ -284,7 +303,7 @@
 
         <!-- PANEL COSTO TIEMPO -->
         <div id="cost-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance">
-            <div onclick="toggleSection('cost-content', 'cost-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
+            <div onclick="toggleSection('cost-content', 'cost-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700 text-balance">
                 <div class="flex items-center gap-2 text-slate-700">
                     <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold text-slate-700">Análisis de Costo de Oportunidad</h2>
@@ -296,7 +315,7 @@
                 <div class="p-6 pt-0">
                     <div class="bg-rose-50 p-6 rounded-3xl border border-rose-100 text-center">
                         <p class="text-xs font-black text-rose-800 uppercase tracking-widest mb-4 text-balance">Intereses pagados actualmente por cada unidad de tiempo:</p>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-slate-700">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left text-slate-700"><p class="text-[10px] text-rose-400 font-bold uppercase text-balance">Mes</p><p id="cost-monthly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
                             <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left text-slate-700"><p class="text-[10px] text-rose-400 font-bold uppercase text-balance">Día</p><p id="cost-daily" class="text-lg font-black text-rose-700">RD$ 0</p></div>
                             <div class="p-4 bg-white rounded-2xl shadow-sm border border-rose-100 text-balance text-center sm:text-left text-slate-700"><p class="text-[10px] text-rose-400 font-bold uppercase text-balance">Hora</p><p id="cost-hourly" class="text-lg font-black text-rose-700">RD$ 0</p></div>
@@ -310,7 +329,7 @@
         <!-- PANEL 2: Resumen Estratégico -->
         <div id="summary-panel" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700">
             <div onclick="toggleSection('summary-content', 'summary-arrow')" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 text-balance text-slate-700">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 2v-6m-8 13h11a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v11a2 2 0 002 2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold text-slate-700 text-balance">Resumen Estratégico</h2>
                     <svg onclick="event.stopPropagation(); showInfo('Indicadores', 'Estado global de tu préstamo.')" class="w-5 h-5 info-btn text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
@@ -318,26 +337,26 @@
                 <svg id="summary-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
             <div id="summary-content" class="collapse-content">
-                <div class="p-5 sm:p-6 pt-0">
+                <div class="p-5 sm:p-6 pt-0 text-slate-700">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 text-center sm:text-left text-balance text-slate-700 text-slate-700">
                         <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 text-center sm:text-left text-slate-700 text-balance"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-balance">Saldo Actual</p><p id="stat-balance" class="text-xl sm:text-2xl font-black text-slate-800 widget-text-size">RD$ 0.00</p></div>
                         <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 text-blue-700 text-center sm:text-left text-balance">
-                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 text-balance">Total Interés</p>
+                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 text-balance text-balance">Total Interés</p>
                             <p id="stat-interest" class="text-xl sm:text-2xl font-black widget-text-size">RD$ 0.00</p>
                             <p id="stat-interest-pct" class="text-[10px] text-blue-400 mt-1">0% del costo</p>
                         </div>
                         <div class="bg-blue-900 p-5 sm:p-6 rounded-2xl shadow-xl border border-blue-800 text-white border-l-4 border-l-blue-400 text-balance text-center sm:text-left">
-                            <p class="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1 text-balance">Ahorro Real Logrado</p>
+                            <p class="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1 text-balance text-balance">Ahorro Real Logrado</p>
                             <p id="stat-savings" class="text-xl sm:text-2xl font-black">RD$ 0.00</p>
                             <p id="stat-months" class="text-[9px] font-bold bg-blue-800 px-2 py-1 rounded-lg mt-2 inline-block">Ahorras 0 meses</p>
                         </div>
-                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 border-l-4 border-l-orange-500 text-orange-700 text-center sm:text-left text-balance text-slate-700"><p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1 text-balance">Abonos Realizados</p><p id="stat-abonos" class="text-xl sm:text-2xl font-black text-orange-700 widget-text-size">RD$ 0.00</p></div>
+                        <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 border-l-4 border-l-orange-500 text-orange-700 text-center sm:text-left text-balance text-slate-700"><p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1 text-balance text-balance">Abonos Realizados</p><p id="stat-abonos" class="text-xl sm:text-2xl font-black text-orange-700 widget-text-size">RD$ 0.00</p></div>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center sm:text-left text-balance text-slate-700">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Fecha Final</p><p id="stat-end-date" class="font-bold text-slate-800">-</p></div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Faltan</p><p id="stat-remaining-months" class="font-bold text-slate-800">0 cuotas</p></div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Pagado</p><p id="stat-total-paid" class="font-bold text-emerald-600">RD$ 0.00</p></div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Carga Int.</p><p id="stat-interest-load" class="font-bold text-rose-600">0.00%</p></div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center sm:text-left text-balance text-slate-700 text-slate-700">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700 text-balance text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Fecha Final</p><p id="stat-end-date" class="font-bold text-slate-800">-</p></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700 text-balance text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Faltan</p><p id="stat-remaining-months" class="font-bold text-slate-800">0 cuotas</p></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700 text-balance text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Pagado</p><p id="stat-total-paid" class="font-bold text-emerald-600">RD$ 0.00</p></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-slate-700 text-balance text-slate-700"><p class="text-[9px] font-black text-slate-400 uppercase">Carga Int.</p><p id="stat-interest-load" class="font-bold text-rose-600">0.00%</p></div>
                     </div>
                     <div class="mt-6 text-center sm:text-left"><button onclick="exportToCalendar()" class="w-full py-3 bg-white text-slate-800 border-2 border-slate-200 rounded-xl font-bold flex items-center justify-center gap-2 text-xs active:scale-95 transition-all hover:bg-slate-50 shadow-sm"><svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z\"/></svg>RECORDATORIOS EN CALENDARIO (ICS)</button></div>
                 </div>
@@ -347,7 +366,7 @@
         <!-- PANEL GRÁFICOS -->
         <div id="charts-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden text-slate-700 text-balance text-slate-700 text-balance text-slate-700">
             <div onclick="toggleSection('charts-content', 'charts-arrow', true)" class="w-full flex justify-between items-center p-5 sm:p-6 hover:bg-slate-50 transition-colors cursor-pointer text-balance text-slate-700">
-                <div class="flex items-center gap-2 text-slate-700">
+                <div class="flex items-center gap-2 text-slate-700 text-balance">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     <h2 class="text-base sm:text-lg font-bold text-slate-700 text-balance">Análisis Visual (Gráficos)</h2>
                     <svg onclick="event.stopPropagation(); showInfo('Gráficas', 'Representación visual de tu deuda y ahorro acumulado.')" class="w-5 h-5 info-btn text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
@@ -355,9 +374,9 @@
                 <svg id="charts-arrow" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
             <div id="charts-content" class="collapse-content">
-                <div class="p-6 pt-0 space-y-8 text-center sm:text-left text-slate-700 text-slate-700">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-slate-700"><div id="chart-balance" class="w-full h-80 text-slate-700"></div><div id="chart-distribution" class="w-full h-80 text-slate-700"></div></div>
-                    <div id="chart-savings" class="w-full h-80 border-t pt-8 border-slate-100 text-slate-700"></div>
+                <div class="p-6 pt-0 space-y-8 text-center sm:text-left text-slate-700 text-slate-700 text-balance text-slate-700">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-slate-700 text-balance text-slate-700"><div id="chart-balance" class="w-full h-80 text-slate-700"></div><div id="chart-distribution" class="w-full h-80 text-slate-700"></div></div>
+                    <div id="chart-savings" class="w-full h-80 border-t pt-8 border-slate-100 text-slate-700 text-balance text-slate-700"></div>
                 </div>
             </div>
         </div>
@@ -365,9 +384,9 @@
         <!-- PANEL TABLA -->
         <div id="table-wrapper" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 hidden">
             <div class="w-full flex flex-col lg:flex-row justify-between items-center p-5 sm:p-6 bg-slate-50 border-b border-slate-200 gap-4">
-                <div class="flex items-center gap-2 text-slate-700 flex-grow cursor-pointer" onclick="toggleSection('table-content-area', 'table-arrow')">
+                <div class="flex items-center gap-2 text-slate-700 flex-grow cursor-pointer text-balance text-slate-700" onclick="toggleSection('table-content-area', 'table-arrow')">
                     <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    <h2 class="text-base sm:text-lg font-bold text-slate-700 text-balance">Detalle de Amortización Dinámica</h2>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-700 text-balance text-slate-700">Detalle de Amortización Dinámica</h2>
                     <svg onclick="event.stopPropagation(); showInfo('Tabla', 'Lleva el control real de tus pagos.')" class="w-5 h-5 info-btn text-slate-700 text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 </div>
                 <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-hide text-slate-700 text-slate-700 text-slate-700 text-slate-700 text-slate-700">
@@ -379,20 +398,20 @@
                 </div>
             </div>
             <div id="table-content-area" class="collapse-content">
-                <div class="overflow-x-auto overflow-y-auto max-h-[500px] sm:max-h-[600px] border-t border-slate-100">
+                <div class="overflow-x-auto overflow-y-auto max-h-[500px] sm:max-h-[600px] border-t border-slate-100 text-slate-700 text-balance text-slate-700">
                     <table class="w-full text-left border-collapse table-mobile-container text-slate-700 text-slate-700 text-slate-700 text-slate-700" id="amortizationTable">
                         <thead class="sticky top-0 bg-slate-800 text-white text-[9px] sm:text-[10px] uppercase font-bold z-20">
                             <tr class="sticky-header">
                                 <th class="p-4 border-r border-slate-700 text-center">Mes</th>
-                                <th class="p-4 border-r border-slate-700 text-balance">Fecha Pago</th>
-                                <th class="p-4 border-r border-slate-700 text-right text-balance">Pago Regular</th>
-                                <th class="p-4 border-r border-slate-700 text-right text-balance">Interés</th>
-                                <th class="p-4 border-r border-slate-700 text-right text-balance">Capital</th>
-                                <th class="p-4 border-r border-slate-700 text-center bg-slate-700 text-balance" id="header-seguro">Seguro</th>
-                                <th class="p-4 border-r border-slate-700 text-center bg-blue-900 text-balance" id="header-abono">Abono Extra</th>
-                                <th class="p-4 border-r border-slate-700 text-right font-black text-balance">Cuota Total</th>
-                                <th class="p-4 border-r border-slate-700 text-right font-black text-slate-200 text-balance text-balance">Saldo</th>
-                                <th class="p-4 text-center bg-slate-700 text-balance">Estatus</th>
+                                <th class="p-4 border-r border-slate-700 text-balance text-balance">Fecha Pago</th>
+                                <th class="p-4 border-r border-slate-700 text-right text-balance text-balance">Pago Regular</th>
+                                <th class="p-4 border-r border-slate-700 text-right text-balance text-balance">Interés</th>
+                                <th class="p-4 border-r border-slate-700 text-right text-balance text-balance">Capital</th>
+                                <th class="p-4 border-r border-slate-700 text-center bg-slate-700 text-balance text-balance" id="header-seguro">Seguro</th>
+                                <th class="p-4 border-r border-slate-700 text-center bg-blue-900 text-balance text-balance" id="header-abono">Abono Extra</th>
+                                <th class="p-4 border-r border-slate-700 text-right font-black text-balance text-balance">Cuota Total</th>
+                                <th class="p-4 border-r border-slate-700 text-right font-black text-slate-200 text-balance">Saldo</th>
+                                <th class="p-4 text-center bg-slate-700 text-balance text-balance">Estatus</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="text-xs sm:text-sm text-slate-600"></tbody>
@@ -427,31 +446,21 @@
         function saveFirebaseConfig() {
             const input = document.getElementById('firebase-config-input').value.trim();
             try {
-                // 1. LIMPIADOR INTELIGENTE DE CONFIGURACIÓN FIREBASE
+                // LIMPIADOR INTELIGENTE FIREBASE
                 let jsonStr = input;
-                
-                // Si el usuario pegó el código JS (sin comillas en llaves)
                 if (input.includes('apiKey:') || !input.includes('"apiKey"')) {
-                    // Limpieza: quitar declaración de variable si existe (const firebaseConfig = ...)
                     jsonStr = input.replace(/^(const|let|var)\s+\w+\s*=\s*/, '');
-                    // Quitar punto y coma final
                     jsonStr = jsonStr.replace(/;\s*$/, '');
-                    // Poner comillas dobles en las llaves (keys)
                     jsonStr = jsonStr.replace(/([{,])\s*([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
-                    // Quitar comas sobrantes antes de cerrar llaves
                     jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
-                    // Convertir comillas simples a dobles si las hay
                     jsonStr = jsonStr.replace(/'/g, '"');
                 }
-                
                 const parsed = JSON.parse(jsonStr);
                 localStorage.setItem('amortiza_firebase_config', JSON.stringify(parsed));
                 alert("Configuración guardada correctamente. La página se recargará.");
                 location.reload();
             }
-            catch(e) { 
-                alert("Configuración no válida. Por favor, asegúrate de copiar el objeto completo que te ofrece la consola de Firebase."); 
-            }
+            catch(e) { alert("Configuración no válida."); }
         }
 
         window.onscroll = function() { document.getElementById("btn-top").style.display = (window.scrollY > 300) ? "block" : "none"; };
@@ -465,7 +474,6 @@
         }
 
         document.getElementById('fileInput').addEventListener('change', handleFileUpload);
-
         function cleanValue(v) { return (v === null || v === undefined || v === "") ? 0 : (typeof v === 'number' ? v : parseFloat(String(v).replace(/,/g, '')) || 0); }
 
         function handleFileUpload(e) {
@@ -494,7 +502,6 @@
             const s = parseFloat(document.getElementById('input-seguro').value);
             const f = document.getElementById('input-fecha').value;
             if(!m || !t || !c || !f) return alert("Completa los campos.");
-
             CONFIG = { montoInicial: m, tasaAnual: t, tasaMensual: t/12, cuotaFija: c, seguro: s };
             amortizationData = [];
             let currS = m, currF = new Date(f + "T12:00:00"), mes = 1;
@@ -510,14 +517,11 @@
             CONFIG.montoInicial = parseFloat(document.getElementById('input-monto').value);
             CONFIG.tasaMensual = (parseFloat(document.getElementById('input-tasa').value)/100)/12;
             CONFIG.cuotaFija = parseFloat(document.getElementById('input-cuota').value);
-
             let currS = CONFIG.montoInicial;
             let totA = 0, totI = 0, totS = 0, totP = 0, saldoA = CONFIG.montoInicial, lastM = 0, endD = "", remC = 0;
-
             amortizationData.forEach(row => {
                 if(currS <= 0.01) { row.visible = false; row.saldo = 0; return; }
-                row.visible = true;
-                row.interes = currS * CONFIG.tasaMensual;
+                row.visible = true; row.interes = currS * CONFIG.tasaMensual;
                 row.capital = CONFIG.cuotaFija - row.interes - row.seguro;
                 row.cuota = CONFIG.cuotaFija + row.abono;
                 currS -= (row.capital + row.abono);
@@ -525,10 +529,8 @@
                 row.saldo = currS;
                 if(row.estatus === "P") { totA += row.abono; totP += row.cuota; saldoA = row.saldo; }
                 else { remC++; }
-                totI += row.interes; totS += row.seguro;
-                lastM = row.mes; endD = row.fecha;
+                totI += row.interes; totS += row.seguro; lastM = row.mes; endD = row.fecha;
             });
-
             renderTable();
             updateDashboardStats({ totA, totI, totS, saldoA, lastM, endD, remC, totP });
             calculateEquity();
@@ -544,20 +546,18 @@
             }
             const ahrT = totIB - d.totI;
             const iP = (d.totI / (d.totI + CONFIG.montoInicial)) * 100;
-
             const elId = id => document.getElementById(id);
             const safeSet = (id, val) => { if(elId(id)) elId(id).innerText = val; };
             safeSet('stat-balance', formatRD(d.saldoA));
             safeSet('stat-interest', formatRD(d.totI));
             safeSet('stat-interest-pct', `${iP.toFixed(1)}% del costo`);
             safeSet('stat-savings', formatRD(ahrT));
-            safeSet('stat-months', `${mB - d.lastM} meses menos`);
+            safeSet('stat-months', `Ahorras ${mB - d.lastM} meses`);
             safeSet('stat-abonos', formatRD(d.totA));
             safeSet('stat-end-date', d.endD || "-");
             safeSet('stat-remaining-months', `${d.remC} cuotas`);
             safeSet('stat-total-paid', formatRD(d.totP));
             safeSet('stat-interest-load', `${((d.totI / CONFIG.montoInicial) * 100).toFixed(2)}%`);
-
             const lastI = amortizationData.find(x => x.visible && x.estatus !== 'P')?.interes || 0;
             safeSet('cost-monthly', formatRD(lastI));
             safeSet('cost-daily', formatRD(lastI / 30));
@@ -591,18 +591,13 @@
                 document.getElementById('sync-code-display').innerText = code;
                 document.getElementById('sync-code-box').classList.remove('hidden');
                 alert(`¡Guardado! Código: ${code}`);
-            } catch(e) { 
-                if (e.message === "CONFIG_MISSING") alert("Pulsa el icono de engranaje en la sección de nube para configurar tu base de datos.");
-                else alert("Error al sincronizar."); 
-            }
+            } catch(e) { alert("Configuración faltante o error."); }
         }
 
         async function downloadFromCloud() {
-            const code = document.getElementById('sync-input').value.trim();
-            if(!code) return alert("Ingresa código.");
+            const code = document.getElementById('sync-input').value; if(!code) return alert("Ingresa código.");
             try {
-                const res = await window.cloudSync.load(code);
-                if(!res) return alert("Código no encontrado.");
+                const res = await window.cloudSync.load(code); if(!res) return alert("No encontrado.");
                 const { data, settings } = res;
                 document.getElementById('input-monto').value = settings.m;
                 document.getElementById('input-tasa').value = settings.t;
@@ -767,13 +762,14 @@
         function formatDate(d) { return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
         
         function showSections() { 
-            // Expandir solo los 2 indicados
+            // 2. Solo expandir Resumen y Tabla automáticamente
             const ids = ['summary-panel', 'table-wrapper', 'simulator-panel', 'equity-panel', 'cost-panel', 'charts-wrapper'];
             ids.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.classList.remove('hidden');
             });
             
+            // Abrir solo los 2 indicados
             const toOpen = ['summary-content', 'table-content-area'];
             const arrows = ['summary-arrow', 'table-arrow'];
             
