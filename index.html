@@ -111,6 +111,26 @@
             box-shadow: none !important;
         }
 
+        .currency-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .currency-prefix {
+            font-size: inherit;
+            font-weight: 600;
+            color: inherit;
+            white-space: nowrap;
+        }
+
+        .editable-input-currency {
+            text-align: right;
+            flex: 1;
+            min-width: 60px;
+        }
+
         .row-paid .editable-input {
             background-color: transparent !important;
             border: none !important;
@@ -118,10 +138,10 @@
         }
 
         @media (max-width: 640px) {
-            /* 2. Corrección de tamaño de fuente en móvil para celdas editables */
             input:not(.editable-input) { font-size: 16px !important; }
             .table-mobile-container .editable-input { font-size: 10px !important; }
-            
+            .currency-prefix { font-size: 9px !important; }
+    
             .table-mobile-container td, .table-mobile-container th { padding: 0.6rem 0.2rem !important; font-size: 10px; }
             .widget-text-size { font-size: 1.25rem !important; }
         }
@@ -411,7 +431,7 @@
                                 <th class="p-4 border-r border-slate-700 text-center bg-blue-900 text-balance text-balance" id="header-abono">Abono Extra</th>
                                 <th class="p-4 border-r border-slate-700 text-right font-black text-balance text-balance">Cuota Total</th>
                                 <th class="p-4 border-r border-slate-700 text-right font-black text-balance">Saldo</th>
-                                <th class="p-4 text-center bg-slate-700 text-balance text-balance" style="width: 1%;">Estatus</th>
+                                <th class="p-4 text-center bg-slate-700" style="width: 60px; min-width: 60px;">Estatus</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="text-xs sm:text-sm text-slate-600"></tbody>
@@ -629,10 +649,16 @@
                     <td class="p-4 text-right border-r font-medium text-rose-600" style="background-color: rgba(239, 68, 68, ${(row.interes/maxI)*0.1})">${formatRD(row.interes)}</td>
                     <td class="p-4 text-right border-r font-medium text-emerald-700">${formatRD(row.capital)}</td>
                     <td class="p-4 text-center border-r">
-                        <input id="edit-seguro-${idx}" type="number" step="0.01" value="${row.seguro.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'seguro')" onchange="updateField(${idx}, 'seguro', this.value)" class="editable-input">
+                    <div class="currency-wrapper">
+                        <span class="currency-prefix">RD$</span>
+                        <input id="edit-seguro-${idx}" type="number" step="0.01" value="${row.seguro.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'seguro')" onchange="updateField(${idx}, 'seguro', this.value)" class="editable-input editable-input-currency">
+                    </div>
                     </td>
                     <td class="p-4 text-center border-r bg-blue-50/10">
-                        <input id="edit-abono-${idx}" type="number" value="${row.abono.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'abono')" onchange="updateField(${idx}, 'abono', this.value)" class="editable-input text-blue-800">
+                    <div class="currency-wrapper">
+                        <span class="currency-prefix text-blue-800">RD$</span>
+                        <input id="edit-abono-${idx}" type="number" value="${row.abono.toFixed(2)}" onfocus="this.select()" onkeydown="handleNav(event, ${idx}, 'abono')" onchange="updateField(${idx}, 'abono', this.value)" class="editable-input editable-input-currency text-blue-800">
+                    </div>
                     </td>
                     <td class="p-4 text-right font-black border-r">${formatRD(CONFIG.cuotaFija + row.abono)}</td>
                     <td class="p-4 text-right font-black text-slate-900 border-r">${formatRD(row.saldo)}</td>
