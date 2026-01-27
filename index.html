@@ -112,12 +112,16 @@
         }
 
         .currency-wrapper {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 1px;
-            width: 100%;
-            min-width: max-content;
+            justify-content: center;
+            gap: 0px;
+            min-width: 100%;
+            overflow: visible;
+        }
+
+        .table-mobile-container td .currency-wrapper {
+            white-space: nowrap;
         }
 
         .currency-prefix {
@@ -130,9 +134,9 @@
 
         .editable-input-currency {
             text-align: right;
-            flex: 1 1 auto;
-            min-width: 55px;
-            max-width: 90px;
+            flex: 0 1 auto;
+            min-width: 75px;
+            width: 100%;
         }
 
         .row-paid .editable-input {
@@ -145,8 +149,15 @@
             input:not(.editable-input) { font-size: 16px !important; }
             .table-mobile-container .editable-input { font-size: 10px !important; }
             .table-mobile-container .currency-prefix { font-size: 10px !important; font-weight: 700; }
-            .table-mobile-container .currency-wrapper { gap: 0px; }
-
+            .table-mobile-container .currency-wrapper { 
+                gap: 0px; 
+                justify-content: center;
+            }
+            .table-mobile-container .editable-input-currency {
+                min-width: 65px !important;
+                max-width: 100px !important;
+            }
+            
             .table-mobile-container td, .table-mobile-container th { padding: 0.6rem 0.2rem !important; font-size: 10px; }
             .widget-text-size { font-size: 1.25rem !important; }
         }
@@ -432,8 +443,8 @@
                                 <th class="p-4 border-r border-slate-700 text-right text-balance text-balance">Pago Regular</th>
                                 <th class="p-4 border-r border-slate-700 text-right text-balance text-balance">Interés</th>
                                 <th class="p-4 border-r border-slate-700 text-right text-balance text-balance">Capital</th>
-                                <th class="p-4 border-r border-slate-700 text-center bg-slate-700" id="header-seguro" style="min-width: 40px;">Seguro</th>
-                                <th class="p-4 border-r border-slate-700 text-center bg-blue-900" id="header-abono" style="min-width: 90px;">Abono Extra</th>
+                                <th class="p-4 border-r border-slate-700 text-center bg-slate-700" id="header-seguro" style="min-width: 85px;">Seguro</th>
+                                <th class="p-4 border-r border-slate-700 text-center bg-blue-900" id="header-abono" style="min-width: 105px;">Abono Extra</th>
                                 <th class="p-4 border-r border-slate-700 text-right font-black text-balance text-balance">Cuota Total</th>
                                 <th class="p-4 border-r border-slate-700 text-right font-black text-balance">Saldo</th>
                                 <th class="p-4 text-center bg-slate-700" style="width: 60px; min-width: 60px;">Estatus</th>
